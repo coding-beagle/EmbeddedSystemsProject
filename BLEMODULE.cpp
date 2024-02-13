@@ -1,8 +1,6 @@
 #include "mbed.h"
 #include "BLEMODULE.h"
 
-
-
 void HM10::init(){
     inputBufferInIndex = 0;
     outputBufferOutIndex = 0;
@@ -54,9 +52,26 @@ int HM10::addCallback(const char signal, Callback<void()> cb){
 }
 
 int HM10::removeCallback(const char signal){
+    int i = 0;
+    for(i; i<sizeof(callbacksArray)/sizeof(callbacks);i++){
+        if(signal == callbacksArray[i].signal){
+                callbacksArray[i].inUse = false;
+                callbacksArray[i].signal = '\0';   
+                break;
+        }
+    }
+    if(i == sizeof(callbacksArray)/sizeof(callbacks)){
+        printf("Callback with signal %c could not be found!", signal);
+        return -1;
+    }
     return 0;
 }
-int HM10::transmit_data(const char* data){
+
+int HM10::transmitData(const char* data, const int len){
+    printf("Called with %s\n", data);
+    for(int i = 0; i<len; i++){
+        bleModule.putc(data[i]);
+    }
     return 0;
 }
 
@@ -66,7 +81,10 @@ dynamically create and declare callbacks via bluetooth*/
 void HM10::doBLE(){
     if(bleModule.readable()){
         char c = bleModule.getc();
-        // inputBufferInIndex = 0;
+
+        // todo reimplement this, which allows multiple character strings
+        //
+        // inputBufferInIndex = 0;              
         // printf("Reading BLE:\n");
         // while(inputBufferInIndex < COMMAND_LENGTH){
         //     char c = bleModule.getc();
@@ -91,11 +109,11 @@ void HM10::doBLE(){
             // }
             if(c == callbacksArray[i].signal){
                 callbacksArray[i].callback();
+                this->transmitData("Successfully Executed", 22);
                 break;
             }
         }
         // memset(inputBuffer, 0, COMMAND_LENGTH);
     }
-    return;
 }
 

@@ -5,6 +5,7 @@
 #define ACCEPTABLE_BAUDS 9600, 19200, 38400, 57600, 115200, 4800, 2400, 1200, 230400 // as per spec sheet
 #define NUMBER_OF_BAUDS 9
 #define COMMAND_LENGTH 2
+#define OUTPUT_BUFFER_SIZE 50
 
 class HM10{
     private:
@@ -44,14 +45,20 @@ class HM10{
                 -1 if not (i.e. all callback slots used)          */
     int addCallback(const char signal, Callback<void()> cb);
     
-    // todo
+    /*  Remove a callback by passing in the signal that is supposed
+        to trigger it.
+        Returns: 0 if the callback is successfully removed
+                -1 if not, i.e. signal doesn't exist              */
     int removeCallback(const char signal);
 
-    // todo
-    int transmit_data(const char* data);
+    /*  Add data to the output transmission buffer, which gets sent
+        over the BLE connection.
+        Returns: 0 on successful addition  
+        NOT WORKING YET                                           */
+    int transmitData(const char* data, const int len);
 
     /*  Main Loop of BLE handling. Must be called every cycle, as this
-        checks whether the BLE device is transmitting data.       */
+        checks whether the BLE device is receiving data.          */
     void doBLE();
 
 };
