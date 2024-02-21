@@ -8,24 +8,32 @@
 
 void accelerateMotors(PwmOut *Motor1, PwmOut *Motor2, float max_speed1, float max_speed2, float duration){
     float speed1, speed2;
-    int i = 100;
-    int i2 = 100;
-    speed1 = (1.0 - max_speed1) * 100;
-    speed2 = (1.0 - max_speed2) * 100;
+    int i = 1000;
+    int i2 = 1000;
+    speed1 = (1.0 - max_speed1) * 1000;
+    speed2 = (1.0 - max_speed2) * 1000;
     while(i > (int)speed1 or i2 > (int)speed2){
             
             if(i > (int)speed1){
-                Motor1->write(i*0.01);
+                Motor1->write(i*0.001);
                 i--;
             }
 
             if(i2 > (int)speed2){
-                Motor2->write(i2*0.01);
+                Motor2->write(i2*0.001);
                 i2--;
             }
-            wait(0.01);
+            wait(0.001);
     }
     wait(duration);
+}
+
+DigitalOut led(LED2);
+
+void turnOnLed(){
+    led = 1;
+    wait(0.1);
+    led = 0;
 }
 
 int main() {
@@ -46,17 +54,16 @@ int main() {
 
     PwmOut pwm(D5);
     pwm.period(Period);
-    pwm.write(0.9);
+    pwm.write(1.0);
 
     PwmOut pwm2(D10);
     pwm2.period(Period);
-    pwm2.write(0.9);
+    pwm2.write(1.0);
 
     DigitalIn button(USER_BUTTON);
-
-    // PwmOut pwm2(D9);
-    // pwm2.period(Period);
-    // pwm2.write(0.9);
+    
+    InterruptIn encoder(D15);
+    encoder.rise(&turnOnLed);
 
     bool currentlyExecuting = false;
 
@@ -67,32 +74,32 @@ int main() {
         //straight drive
         direction1 = 1;
         direction2 = 0;
-        accelerateMotors(&pwm, &pwm2, 0.5, 0.4, 1.4);
+        accelerateMotors(&pwm, &pwm2, 0.5, 0.401, 1.43);
     
         //turning
         direction1 = 1;
         direction2 = 1;
-        accelerateMotors(&pwm, &pwm2, 0.5, 0.5, 0.15);
+        accelerateMotors(&pwm, &pwm2, 0.5, 0.5, 0.165);
     }
 
     direction1 = 1;
     direction2 = 1;
-    accelerateMotors(&pwm, &pwm2, 0.5, 0.5, 0.1);
+    accelerateMotors(&pwm, &pwm2, 0.5, 0.5, 0.14);
 
     for(int i = 0; i<4; i++){
         //straight drive
         direction1 = 1;
         direction2 = 0;
-        accelerateMotors(&pwm, &pwm2, 0.5, 0.4, 1.4);
+        accelerateMotors(&pwm, &pwm2, 0.5, 0.4, 1.45);
     
         //turning
         direction1 = 0;
         direction2 = 0;
-        accelerateMotors(&pwm, &pwm2, 0.5, 0.5, 0.12);
+        accelerateMotors(&pwm, &pwm2, 0.5, 0.5, 0.145);
     }
-    direction1 = 1;
-    direction2 = 0;
-    accelerateMotors(&pwm, &pwm2, 0.5, 0.4, 1.4);
+    // direction1 = 1;
+    // direction2 = 0;
+    // accelerateMotors(&pwm, &pwm2, 0.5, 0.4, 1.5);
 
     pwm.write(1.0);
     pwm2.write(1.0);
