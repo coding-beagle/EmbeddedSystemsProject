@@ -10,7 +10,7 @@
 class HM10{
     private:
         struct callbacks{
-                char signal;
+                int signal;
                 Callback<void()> callback;
                 bool inUse;
             };
@@ -19,8 +19,7 @@ class HM10{
         
         Serial bleModule;
 
-        char inputBuffer[COMMAND_LENGTH];   // incoming data
-        int inputBufferInIndex;
+        int input;
 
         char outputBuffer[50];  // to send signals to bluetooth receiver
         int outputBufferOutIndex;
@@ -43,13 +42,13 @@ class HM10{
         through BLE. 
         Returns: 0 if the callback is successfully added
                 -1 if not (i.e. all callback slots used)          */
-    int addCallback(const char signal, Callback<void()> cb);
+    int addCallback(int signal, Callback<void()> cb);
     
     /*  Remove a callback by passing in the signal that is supposed
         to trigger it.
         Returns: 0 if the callback is successfully removed
                 -1 if not, i.e. signal doesn't exist              */
-    int removeCallback(const char signal);
+    int removeCallback(int signal);
 
     /*  Add data to the output transmission buffer, which gets sent
         over the BLE connection.

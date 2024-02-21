@@ -2,7 +2,6 @@
 #include "BLEMODULE.h"
 
 void HM10::init(){
-    inputBufferInIndex = 0;
     outputBufferOutIndex = 0;
     outputBufferInIndex = 0;
 
@@ -38,7 +37,7 @@ int HM10::setBaud(int baud){
     }
 }
     
-int HM10::addCallback(const char signal, Callback<void()> cb){
+int HM10::addCallback(int signal, Callback<void()> cb){
     for(int i = 0; i < 5; i++){
         if(callbacksArray[i].inUse == false){
             callbacksArray[i].signal = signal;
@@ -51,12 +50,12 @@ int HM10::addCallback(const char signal, Callback<void()> cb){
     return -1;
 }
 
-int HM10::removeCallback(const char signal){
+int HM10::removeCallback(int signal){
     int i = 0;
     for(i; i<sizeof(callbacksArray)/sizeof(callbacks);i++){
         if(signal == callbacksArray[i].signal){
                 callbacksArray[i].inUse = false;
-                callbacksArray[i].signal = '\0';   
+                callbacksArray[i].signal = 0;   
                 break;
         }
     }
@@ -80,7 +79,7 @@ previously declared. if it has, then execute that callback. this approach allows
 dynamically create and declare callbacks via bluetooth*/
 void HM10::doBLE(){
     if(bleModule.readable()){
-        char c = bleModule.getc();
+        int c = bleModule.getc();
 
         // todo reimplement this, which allows multiple character strings
         //
