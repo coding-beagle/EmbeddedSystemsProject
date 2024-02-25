@@ -12,7 +12,9 @@ class HM10{
         struct callbacks{
                 int signal;
                 Callback<void()> callback;
+                Callback<void(int)> callback_int;
                 bool inUse;
+                bool takesArg;
             };
         
         void init();
@@ -25,7 +27,7 @@ class HM10{
         int outputBufferOutIndex;
         int outputBufferInIndex;
 
-        callbacks callbacksArray[5]; // max of five callbacks i guess
+        callbacks callbacksArray[10]; // max of ten callbacks i guess
 
     public:
 
@@ -38,11 +40,12 @@ class HM10{
                 -1 if failed                                      */
     int setBaud(int baud);
 
-    /*  Assign a callback to run when the signal character is sent
+    /*  Assign a callback to run when the signal number is sent
         through BLE. 
         Returns: 0 if the callback is successfully added
                 -1 if not (i.e. all callback slots used)          */
     int addCallback(int signal, Callback<void()> cb);
+    int addCallback(int signal, Callback<void(int)> cb);
     
     /*  Remove a callback by passing in the signal that is supposed
         to trigger it.
