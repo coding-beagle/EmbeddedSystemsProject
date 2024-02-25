@@ -5,8 +5,9 @@ void HM10::init(){
     outputBufferOutIndex = 0;
     outputBufferInIndex = 0;
 
-    for(int i = 0; i<5; i++){
+    for(int i = 0; i<10; i++){
         callbacksArray[i].inUse = false;
+        callbacksArray[i].takesArg = false;
     }
 }
 
@@ -38,11 +39,25 @@ int HM10::setBaud(int baud){
 }
     
 int HM10::addCallback(int signal, Callback<void()> cb){
-    for(int i = 0; i < 5; i++){
+    for(int i = 0; i < 10; i++){
         if(callbacksArray[i].inUse == false){
             callbacksArray[i].signal = signal;
             callbacksArray[i].callback = cb;
             callbacksArray[i].inUse = true;
+            return 0;
+        }
+    }
+    printf("All Callbacks In Use!");
+    return -1;
+}
+
+int HM10::addCallback(int signal, Callback<void(int)> cb){
+    for(int i = 0; i < 10; i++){
+        if(callbacksArray[i].inUse == false){
+            callbacksArray[i].signal = signal;
+            callbacksArray[i].callback_int = cb;
+            callbacksArray[i].inUse = true;
+            callbacksArray[i].takesArg = true;
             return 0;
         }
     }
@@ -55,7 +70,8 @@ int HM10::removeCallback(int signal){
     for(i; i<sizeof(callbacksArray)/sizeof(callbacks);i++){
         if(signal == callbacksArray[i].signal){
                 callbacksArray[i].inUse = false;
-                callbacksArray[i].signal = 0;   
+                callbacksArray[i].signal = 0;
+                callbacksArray[i].takesArg = false;   
                 break;
         }
     }
@@ -68,7 +84,7 @@ int HM10::removeCallback(int signal){
 
 int HM10::transmitData(const char* data, const int len){
     printf("Called with %s\n", data);
-    for(int i = 0; i<len; i++){
+    for(int i = 0; i<len+1; i++){
         bleModule.putc(data[i]);
     }
     return 0;
@@ -80,39 +96,23 @@ dynamically create and declare callbacks via bluetooth*/
 void HM10::doBLE(){
     if(bleModule.readable()){
         int c = bleModule.getc();
-
-        // todo reimplement this, which allows multiple character strings
-        //
-        // inputBufferInIndex = 0;              
-        // printf("Reading BLE:\n");
-        // while(inputBufferInIndex < COMMAND_LENGTH){
-        //     char c = bleModule.getc();
-        //     printf("char C %c", c);
-        //     inputBuffer[inputBufferInIndex] = c;
-        //     inputBufferInIndex++;
-        //     if(c == '\0'){
-        //         break;
-        //     }
-        // }
-        // inputBuffer[COMMAND_LENGTH - 1] = '\0';
-        // printf("\nInput Buffer: %s\n", inputBuffer);
-        // inputBufferInIndex = 0;
         
         for(int i = 0; i<sizeof(callbacksArray)/sizeof(callbacks);i++){     // find if the signal matches an existing callback in array
-            // if(strncmp(inputBuffer, callbacksArray[i].signal, COMMAND_LENGTH) == 0){
-            //     printf("Callback Triggered");
-            //     Callback<void()> cb = callbacksArray[i].callback;
-            //     cb();
-            //     memset(inputBuffer, 0, COMMAND_LENGTH);
-            //     break;
-            // }
+            
             if(c == callbacksArray[i].signal){
-                callbacksArray[i].callback();
-                this->transmitData("Successfully Executed", 22);
-                break;
+                if(callbacksArray[i].takesArg){
+                    int arg = bleModule.getc();
+                    callbacksArray[i].callback_int(arg);
+                    char toTransmit[30];
+                    sprintf(toTransmit, "Executed with %d", arg);
+                    transmitData(toTransmit, 30);
+                }
+                else{
+                    callbacksArray[i].callback();
+                    transmitData("Executed", 9);
+                    break;
+                }
             }
         }
-        // memset(inputBuffer, 0, COMMAND_LENGTH);
     }
 }
-
