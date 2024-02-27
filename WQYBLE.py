@@ -173,6 +173,11 @@ class Root(ctk.CTk):
         self.TBcommandLog.see(tk.END)
         run_coroutine_threadsafe(self.ble_manager.send_command(99))
 
+    def toggle_RPS_count(self):
+        self.TBcommandLog.insert(tk.END ,"\nToggling RPS Counter")
+        self.TBcommandLog.see(tk.END)
+        run_coroutine_threadsafe(self.ble_manager.send_command(50))
+
     def enable_disable(self):
         if(self.enabled):
             self.TBcommandLog.insert(tk.END ,"\nDisabling Motors")
@@ -327,19 +332,23 @@ class Root(ctk.CTk):
         self.sliderMotor2Speed.set(100)
 
         self.labelFloatInput = ctk.CTkLabel(self, text="Send Float")
-        self.labelFloatInput.place(x=250.0, y=370.0)
+        self.labelFloatInput.place(x=250.0, y=360.0)
 
         self.entryFloatInput = ctk.CTkEntry(self)
-        self.entryFloatInput.place(x=250.0, y=400.0)
+        self.entryFloatInput.place(x=250.0, y=390.0)
 
         self.buttonSendFloat = ctk.CTkButton(self, width=40, text='Send', command=self.send_float)
-        self.buttonSendFloat.place(x=400.0, y=400.0)
+        self.buttonSendFloat.place(x=400.0, y=390.0)
     
         self.buttonConnect = ctk.CTkButton(self,text="Connect", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()), width=80)
         self.buttonConnect.place(x=338.0, y=16)
 
         self.buttonDisconnect = ctk.CTkButton(self,text="Disconnect", command=lambda: run_coroutine_threadsafe(self.ble_manager.disconnect()), width= 80)
         self.buttonDisconnect.place(x=250.0, y=16)
+
+        self.switchRPSCount = ctk.CTkSwitch(self, text="Toggle RPS Count?", command=self.toggle_RPS_count)
+        self.switchRPSCount.place(x=250.0, y=440.0)
+        self.switchRPSCount.select()
 
 threading.Thread(target=start_asyncio_loop, daemon=True).start()
 
