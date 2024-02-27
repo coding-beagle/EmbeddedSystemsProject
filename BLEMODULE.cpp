@@ -1,13 +1,12 @@
 #include "mbed.h"
 #include "BLEMODULE.h"
+#include <cstdint>
 
 void HM10::init(){
-    outputBufferOutIndex = 0;
-    outputBufferInIndex = 0;
-
     for(int i = 0; i<10; i++){
         callbacksArray[i].inUse = false;
-        callbacksArray[i].takesArg = false;
+        callbacksArray[i].takesInt = false;
+        callbacksArray[i].takesFloat = false;
     }
 }
 
@@ -18,6 +17,24 @@ HM10::HM10(PinName rx, PinName tx) : bleModule(rx, tx){
 HM10::HM10(PinName rx, PinName tx, int baud) : bleModule(rx, tx){
             HM10::setBaud(baud);
             init();
+}
+
+float HM10::incoming_to_float(){
+    int index = 0;
+    uint32_t output = 0;
+    while(index < 4){
+        uint32_t c = bleModule.getc() << (index * 8);
+        output |= c;
+        index++;
+    }
+
+    union {
+            uint32_t asInt;
+            float asFloat;
+        } u;
+
+        u.asInt = output;
+        return u.asFloat;
 }
 
 int HM10::setBaud(int baud){
@@ -57,7 +74,21 @@ int HM10::addCallback(int signal, Callback<void(int)> cb){
             callbacksArray[i].signal = signal;
             callbacksArray[i].callback_int = cb;
             callbacksArray[i].inUse = true;
-            callbacksArray[i].takesArg = true;
+            callbacksArray[i].takesInt = true;
+            return 0;
+        }
+    }
+    printf("All Callbacks In Use!");
+    return -1;
+}
+
+int HM10::addCallback(int signal, Callback<void(float)> cb){
+    for(int i = 0; i < 10; i++){
+        if(callbacksArray[i].inUse == false){
+            callbacksArray[i].signal = signal;
+            callbacksArray[i].callback_float = cb;
+            callbacksArray[i].inUse = true;
+            callbacksArray[i].takesFloat = true;
             return 0;
         }
     }
@@ -71,7 +102,8 @@ int HM10::removeCallback(int signal){
         if(signal == callbacksArray[i].signal){
                 callbacksArray[i].inUse = false;
                 callbacksArray[i].signal = 0;
-                callbacksArray[i].takesArg = false;   
+                callbacksArray[i].takesInt = false; 
+                callbacksArray[i].takesFloat = false;  
                 break;
         }
     }
@@ -100,11 +132,19 @@ void HM10::doBLE(){
         for(int i = 0; i<sizeof(callbacksArray)/sizeof(callbacks);i++){     // find if the signal matches an existing callback in array
             
             if(c == callbacksArray[i].signal){
-                if(callbacksArray[i].takesArg){
+                if(callbacksArray[i].takesInt){
                     int arg = bleModule.getc();
                     callbacksArray[i].callback_int(arg);
                     char toTransmit[30];
                     sprintf(toTransmit, "Executed with %d", arg);
+                    transmitData(toTransmit, 30);
+                }
+                else if(callbacksArray[i].takesFloat){
+                    float float_arg = incoming_to_float();
+                    callbacksArray[i].callback_float(float_arg);
+                    char toTransmit[30];
+                    printf("(From Class) Executed with %f\n", float_arg);
+                    sprintf(toTransmit, "Executed with %f", float_arg);
                     transmitData(toTransmit, 30);
                 }
                 else{
