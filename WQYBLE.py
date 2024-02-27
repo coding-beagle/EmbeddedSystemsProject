@@ -11,6 +11,8 @@ import customtkinter as ctk
 import threading
 import tkinter as tk
 import re
+import math
+import struct
 
 found_devices = []
 CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb" 
@@ -25,6 +27,7 @@ class BLEDeviceManager:
         self.response_callback = response_callback
         self.update_rps1_callback = updaterps1cb
         self.update_rps2_callback = updaterps2cb
+        self.consoleReference = None
         self.rps1 = 0.0
         self.rps2 = 0.0
 
@@ -52,14 +55,26 @@ class BLEDeviceManager:
 
     async def connect(self):
         if self.client is None:
+            self.consoleReference.insert(tk.END, f"Finding devices\n")
             devices = await BleakScanner.discover()
+            self.consoleReference.insert(tk.END, f"\nFound devices:\n")
+
+            for found_device in devices:
+                self.consoleReference.insert(tk.END, f"Device: {found_device.name}\n")
+
             device_address = next((d.address for d in devices if d.name == self.device_name), None)
             if device_address is not None:
                 self.client = BleakClient(device_address)
+                self.consoleReference.insert(tk.END, f"\nDevice found at: {device_address}")
+                self.consoleReference.see(tk.END)
         if not self.connected:
             try:
+                self.consoleReference.insert(tk.END, f"\nConnecting to: {device_address}")
                 await self.client.connect()
                 self.connected = await self.client.is_connected()
+                self.consoleReference.insert(tk.END, "\nSuccesfully Connected!")
+                self.consoleReference.insert(tk.END, "\nGet BLEing!")
+                self.consoleReference.see(tk.END)
                 if self.connected:
                 # sub to notifs
                     await self.subscribe_to_notifications("0000ffe1-0000-1000-8000-00805f9b34fb", self.notification_handler)
@@ -68,11 +83,16 @@ class BLEDeviceManager:
 
     async def disconnect(self):
         if self.client is not None and self.connected:
+            self.consoleReference.insert(tk.END, "\n\nAttempting to disconnect")
+            self.consoleReference.see(tk.END)
             await self.client.disconnect()
             self.connected = False
+            self.consoleReference.insert(tk.END, "\nSuccesfully Disconnected!")
+            self.consoleReference.see(tk.END)
             print("Disconnected from the BLE device.")
+            exit()
 
-    async def send_command(self, command_value, delay_after=0):
+    async def send_command(self, command_value, delay_after=0.0):
         if self.connected:
             command_bytes = command_value.to_bytes(1, byteorder='little')
             await self.client.write_gatt_char(CHARACTERISTIC_UUID, command_bytes)
@@ -89,7 +109,7 @@ class BLEDeviceManager:
         else:
             print("Device is not connected.")
     
-    async def send_command_with_argument(self, command, arg=None, delay_between=0.2):
+    async def send_command_with_argument(self, command, arg=None, delay_between=0.1):
         # ensure there's a connection
         if not self.connected:
             print("Device not connected.")
@@ -102,10 +122,18 @@ class BLEDeviceManager:
         
         # if an argument is provided, wait a bit and then send it
         if arg is not None:
-            await asyncio.sleep(delay_between)  # wait for the device to process the command
-            arg_bytes = arg.to_bytes(1, byteorder='little')
-            await self.client.write_gatt_char(CHARACTERISTIC_UUID, arg_bytes)
-            print(f"Argument {arg} sent.")
+            if(isinstance(arg, int)):
+                await asyncio.sleep(delay_between)  # wait for the device to process the command
+                arg_bytes = arg.to_bytes(1, byteorder='little')
+                await self.client.write_gatt_char(CHARACTERISTIC_UUID, arg_bytes)
+                print(f"Argument {arg} sent.")
+            if(isinstance(arg, list)):
+                print(f"Called, {arg}")
+                for i in arg:
+                    await asyncio.sleep(delay_between)  # wait for the device to process the command
+                    arg_bytes = i.to_bytes(1, byteorder='little')
+                    await self.client.write_gatt_char(CHARACTERISTIC_UUID, arg_bytes)
+                print(f"Argument {arg} sent.")
 
 loop = None  # global variable to hold the loop reference 
 # used for debuggging multithreadingjfnjkhjkljlkopdgdkln
@@ -132,7 +160,8 @@ class Root(ctk.CTk):
         # schedule the disconnect coroutine and wait for it to complete
         asyncio.run_coroutine_threadsafe(self.ble_manager.disconnect(), asyncio.get_event_loop())
         # give a moment for the disconnect coroutine to initiate
-        asyncio.get_event_loop().call_later(1, self.destroy)
+        asyncio.get_event_loop().call_later(5, self.destroy)
+        exit()
 
     def update_response(self, response):
         # this method updates the GUI with the response
@@ -141,14 +170,19 @@ class Root(ctk.CTk):
 
     def toggle_led(self):
         self.TBcommandLog.insert(tk.END ,"\nToggling LED")
+        self.TBcommandLog.see(tk.END)
         run_coroutine_threadsafe(self.ble_manager.send_command(99))
 
     def enable_disable(self):
         if(self.enabled):
             self.TBcommandLog.insert(tk.END ,"\nDisabling Motors")
+            self.TBcommandLog.see(tk.END)
             run_coroutine_threadsafe(self.ble_manager.send_command(13))
+            self.enabled = False
         else:
+            self.enabled = False
             self.TBcommandLog.insert(tk.END ,"\nEnabling Motors")
+            self.TBcommandLog.see(tk.END)
             run_coroutine_threadsafe(self.ble_manager.send_command(13))
 
     def update_rps1(self, val):
@@ -183,6 +217,24 @@ class Root(ctk.CTk):
     def set_motor2_direction(self, val):
         run_coroutine_threadsafe(self.set_motor2_direction_async(int(val)))
 
+    def send_entry(self, e=None):
+        value_to_send = self.commandEntry.get()
+        self.TBcommandLog.insert(tk.END , f"\nSending: {int(value_to_send)}")
+        self.TBcommandLog.see(tk.END)
+        run_coroutine_threadsafe(self.ble_manager.send_command(int(value_to_send)))
+
+    def float_to_bytes_le(self, f):
+        # Convert the float to 4 bytes in little-endian format
+        bytes_le = struct.pack('<f', f)
+        return list(struct.unpack('4B', bytes_le))
+
+    async def send_float_async(self, f):
+        await self.ble_manager.send_command_with_argument(33, f)
+
+    def send_float(self):
+        input = float(self.entryFloatInput.get())
+        run_coroutine_threadsafe(self.send_float_async(self.float_to_bytes_le(input)))
+
     def __init__(self):
         super().__init__()
         self.enabled = True
@@ -190,6 +242,7 @@ class Root(ctk.CTk):
         self.ble_manager.response_callback = self.update_response
         self.ble_manager.update_rps1_callback = self.update_rps1
         self.ble_manager.update_rps2_callback = self.update_rps2
+        
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
         ## Geometry and Theme Settings
@@ -206,13 +259,16 @@ class Root(ctk.CTk):
         self.TBcommandLog.place(x=23.0, y=89)
         self.TBcommandLog.bind("<Key>", lambda e: "break")
 
+        self.ble_manager.consoleReference = self.TBcommandLog
+
         self.labelConsoleLog = ctk.CTkLabel(self,text="Console Log")
         self.labelConsoleLog.place(x=25, y=59)
     
         self.commandEntry = ctk.CTkEntry(self)
         self.commandEntry.place(x=22, y=320)
+        self.commandEntry.bind("<Return>", self.send_entry)
     
-        self.buttonSendCommand = ctk.CTkButton(self,text="SEND",width=30)
+        self.buttonSendCommand = ctk.CTkButton(self,text="SEND",width=30, command=self.send_entry)
         self.buttonSendCommand.place(x=177, y=320)
     
         self.Label_2 = ctk.CTkLabel(self,text="Motor Control")
@@ -240,10 +296,10 @@ class Root(ctk.CTk):
         self.buttonEnableDisable = ctk.CTkButton(self,text="Toggle Motors",width=50, command=self.enable_disable)
         self.buttonEnableDisable.place(x=338, y=320)
     
-        self.sliderRPS1 = ctk.CTkSlider(self, state='disabled', from_=0, to=16.0)
+        self.sliderRPS1 = ctk.CTkSlider(self, state='disabled', from_=0, to=16.0, border_width=10.0)
         self.sliderRPS1.place(x=23.0, y=399)
     
-        self.sliderRPS2 = ctk.CTkSlider(self, state='disabled', from_=0, to=16.0)
+        self.sliderRPS2 = ctk.CTkSlider(self, state='disabled', from_=0, to=16.0, border_width=10.0)
         self.sliderRPS2.place(x=23.0, y=456)
     
         self.labelWheel1RPS = ctk.CTkLabel(self,text="Wheel 1 RPS")
@@ -267,9 +323,21 @@ class Root(ctk.CTk):
         self.sliderMotor2Speed = ctk.CTkSlider(self, from_=0, to=100, number_of_steps=100, command=self.set_motor2_speed)
         self.sliderMotor2Speed.place(x=250.0, y=242.0)
         self.sliderMotor2Speed.set(100)
+
+        self.labelFloatInput = ctk.CTkLabel(self, text="Send Float")
+        self.labelFloatInput.place(x=250.0, y=370.0)
+
+        self.entryFloatInput = ctk.CTkEntry(self)
+        self.entryFloatInput.place(x=250.0, y=400.0)
+
+        self.buttonSendFloat = ctk.CTkButton(self, width=40, text='Send', command=self.send_float)
+        self.buttonSendFloat.place(x=400.0, y=400.0)
     
-        self.Button_1 = ctk.CTkButton(self,text="CONNECT", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()))
-        self.Button_1.place(x=338.0, y=16)
+        self.buttonConnect = ctk.CTkButton(self,text="Connect", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()), width=80)
+        self.buttonConnect.place(x=338.0, y=16)
+
+        self.buttonDisconnect = ctk.CTkButton(self,text="Disconnect", command=lambda: run_coroutine_threadsafe(self.ble_manager.disconnect()), width= 80)
+        self.buttonDisconnect.place(x=250.0, y=16)
 
 threading.Thread(target=start_asyncio_loop, daemon=True).start()
 

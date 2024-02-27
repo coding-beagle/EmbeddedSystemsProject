@@ -19,7 +19,10 @@ class ReadLine:
             self.buf = self.buf[i+1:]
             return r
         while True:
-            i = max(1, min(2048, self.s.in_waiting))
+            try:
+                i = max(1, min(2048, self.s.in_waiting))
+            except:
+                return
             data = self.s.read(i)
             i = data.find(b"\n")
             if i >= 0:
@@ -58,19 +61,28 @@ try:
         if response:
             rps = response.decode("utf-8").strip()
             if line_count % 2 == 0:
-                ypoints1 = np.append(ypoints1, float(rps))
+                try:
+                    ypoints1 = np.append(ypoints1, float(rps))
+                except:
+                    pass
                 current_xpoints = xpoints[:len(ypoints1)]  # Adjust xpoints to match ypoints1's length
                 line1.set_xdata(current_xpoints)
-                line1.set_ydata(ypoints1)
+                try:
+                    line1.set_ydata(ypoints1)
+                except:
+                    pass
             elif line_count % 2 == 1:
-                ypoints2 = np.append(ypoints2, float(rps))
+                try:
+                    ypoints2 = np.append(ypoints2, float(rps))
+                except:
+                    pass
                 current_xpoints = xpoints[:len(ypoints2)]  # Adjust xpoints to match ypoints2's length
                 line2.set_xdata(current_xpoints)
                 line2.set_ydata(ypoints2)
             else:
                 print(response)
             
-            xpoints = np.append(xpoints, len(xpoints) * 0.05)  # Append to xpoints after updating plot
+            xpoints = np.append(xpoints, len(xpoints) * 0.03)  # Append to xpoints after updating plot
             
             ax1.relim()
             ax1.autoscale_view()
