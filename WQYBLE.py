@@ -251,6 +251,8 @@ class Root(ctk.CTk):
     
         self.geometry("500x500")
         self.title("WQY BLE")
+
+        self.resizable(False, False)
     
         self.labelTitle = ctk.CTkLabel(self,text="WQY BLE APP",font=('roboto', -30))
         self.labelTitle.place(x=23, y=16)
