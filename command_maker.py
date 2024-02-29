@@ -32,20 +32,25 @@ output = ""
 
 output += delay(0.01)
 
+output += go_straight(2.4, 3.0)
+output += delay(0.2)
+output += turn_left(0.53, 3.0)
+output += delay(0.2)
+
+for i in range(3):
+    output += go_straight(2, 3.0)
+    output += delay(0.2)
+    output += turn_left(0.53, 3.0)
+    output += delay(0.2)
+
+output += turn_left(0.53, 3.0)
+output += delay(0.2)
+
 for i in range(4):
     output += go_straight(2, 3.0)
-    output += delay(0.5)
-    output += turn_left(0.4, 3.0)
-    output += delay(0.5)
-
-output += turn_left(0.4, 3.0)
-output += delay(0.5)
-
-for i in range(4):
-    output += go_straight(2, 3.0)
-    output += delay(0.5)
+    output += delay(0.2)
     output += turn_right(0.4, 3.0)
-    output += delay(0.5)
+    output += delay(0.2)
 
 output += f"    {{{timer:.2f}, -1, 1, 0, 0.0}}\n"
 

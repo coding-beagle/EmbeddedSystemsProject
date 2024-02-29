@@ -37,7 +37,8 @@ class BLEDeviceManager:
         try:
             message = data.decode('utf-8')
         except UnicodeDecodeError:
-            message = "Bad decoding!"
+            message = f"failed to decode"
+            print(f"Bad decoded data: {data}")
 
         match_rps1 = re.match(r"RPS1 = ([\d.]+)", message)
         if match_rps1:
@@ -109,7 +110,7 @@ class BLEDeviceManager:
         else:
             print("Device is not connected.")
     
-    async def send_command_with_argument(self, command, arg=None, delay_between=0.1):
+    async def send_command_with_argument(self, command, arg=None, delay_between=0.15):
         # ensure there's a connection
         if not self.connected:
             print("Device not connected.")
@@ -199,16 +200,22 @@ class Root(ctk.CTk):
         self.sliderRPS2.set(val)
 
     async def set_motor1_speed_async(self, val):
+        self.changing_motor1_speed = True
         await self.ble_manager.send_command_with_argument(19, (val))
+        self.changing_motor1_speed = False
 
     def set_motor1_speed(self, val):
-        run_coroutine_threadsafe(self.set_motor1_speed_async(int(val)))
+        if(not(self.changing_motor1_speed)):
+            run_coroutine_threadsafe(self.set_motor1_speed_async(int(val)))
 
     async def set_motor2_speed_async(self, val):
+        self.changing_motor2_speed = True
         await self.ble_manager.send_command_with_argument(20, (val))
+        self.changing_motor2_speed = False
 
     def set_motor2_speed(self, val):
-        run_coroutine_threadsafe(self.set_motor2_speed_async(int(val)))
+        if(not(self.changing_motor2_speed)):
+            run_coroutine_threadsafe(self.set_motor2_speed_async(int(val)))
 
     async def set_motor1_direction_async(self, val):
         await self.ble_manager.send_command_with_argument(14, (val))
@@ -224,9 +231,13 @@ class Root(ctk.CTk):
 
     def send_entry(self, e=None):
         value_to_send = self.commandEntry.get()
-        self.TBcommandLog.insert(tk.END , f"\nSending: {int(value_to_send)}")
+        if("0x" in value_to_send):
+            self.TBcommandLog.insert(tk.END , f"\nSending: {int(value_to_send, 16)}")    # allow us to send hex values through terminal
+            run_coroutine_threadsafe(self.ble_manager.send_command(int(value_to_send.split("0x")[1], 16)))
+        else:
+            self.TBcommandLog.insert(tk.END , f"\nSending: {int(value_to_send)}")
+            run_coroutine_threadsafe(self.ble_manager.send_command(int(value_to_send)))
         self.TBcommandLog.see(tk.END)
-        run_coroutine_threadsafe(self.ble_manager.send_command(int(value_to_send)))
 
     def float_to_bytes_le(self, f):
         # Convert the float to 4 bytes in little-endian format
@@ -247,8 +258,12 @@ class Root(ctk.CTk):
         self.ble_manager.response_callback = self.update_response
         self.ble_manager.update_rps1_callback = self.update_rps1
         self.ble_manager.update_rps2_callback = self.update_rps2
+
+        self.changing_motor1_speed = False
+        self.changing_motor2_speed = False
         
         self.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.lock = asyncio.Lock()
 
         ## Geometry and Theme Settings
         ctk.set_appearance_mode("dark")   
