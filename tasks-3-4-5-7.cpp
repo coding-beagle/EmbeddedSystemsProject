@@ -8,6 +8,7 @@
 #define DelayPeriod 0.2
 
 bool ledState;
+bool togglePrintRPS = true;
 
 DigitalOut enable(ENABLE_PIN);
 
@@ -70,6 +71,14 @@ void driveMotor2(int dutyCycle){
     pwm2.write((float)(dutyCycle) * 0.01);
 }
 
+void transmit_float(float float_received){
+    printf("%f\n", float_received);
+}
+
+void allowedPrint(){
+    togglePrintRPS = !togglePrintRPS;
+}
+
 DigitalOut led(LED2);
 
 int main() {
@@ -83,6 +92,10 @@ int main() {
 
     ble.addCallback(19, &driveMotor1);
     ble.addCallback(20, &driveMotor2);
+
+    ble.addCallback(50, &allowedPrint);
+
+    ble.addCallback(33, &transmit_float);
 
     enable = 1;
 
@@ -120,15 +133,17 @@ int main() {
                 break;
 
             case checkpulse:
-                char data[13];
-                rps1 = encoder1.getRPS();
-                rps2 = encoder2.getRPS();
+                if(togglePrintRPS){
+                    char data[14];
+                    rps1 = encoder1.getRPS();
+                    rps2 = encoder2.getRPS();
 
-                sprintf(data, "RPS1 = %1.3lf", rps1);
-                ble.transmitData(data, sizeof(data)/sizeof(char));
-                sprintf(data, "RPS2 = %1.3lf", rps2);
-                ble.transmitData(data, sizeof(data)/sizeof(char));
-
+                    sprintf(data, "RPS1 = %1.4lf", rps1);
+                    ble.transmitData(data, sizeof(data)/sizeof(char));
+                    sprintf(data, "RPS2 = %1.4lf", rps2);
+                    ble.transmitData(data, sizeof(data)/sizeof(char));
+                }
+                
                 state = normal;
                 break;
 
