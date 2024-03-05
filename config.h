@@ -11,10 +11,18 @@
 
 #define BLE_RX D10
 #define BLE_TX D2
-#define BLE_PINS_TUPLE BLE_RX, BLE_TX, BLE_BAUD
+#define BLE_PINS_TUPLE BLE_RX, BLE_TX, BLE_BAUD // ignore
 
 #define ENCODER1_CHA PC_3
 #define ENCODER2_CHA PC_2
+
+#define LINE_SENSOR_1 A0
+#define LINE_SENSOR_2 A1
+#define LINE_SENSOR_3 A2
+#define LINE_SENSOR_4 A3
+
+#define SENSOR_BANK_1 D0
+#define SENSOR_BANK_2 D1
 
 // Settings
 
@@ -23,7 +31,7 @@
 
 #define ENCODER_MEASURE_RATE 0.01
 #define PID_FREQ 0.01
-#define DATA_MEASURE_FREQ 0.1
+#define DATA_MEASURE_FREQ 0.05
 #define BLE_POLL_FREQ 0.01
 
 #define BLE_BAUD 9600
