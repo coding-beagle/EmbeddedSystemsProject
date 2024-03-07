@@ -125,7 +125,9 @@ int main() {
     ble.addCallback(SET_NAVIGATION_P_SIGNAL, &change_p3_val);
     ble.addCallback(SET_NAVIGATION_I_SIGNAL, &change_i3_val);
     ble.addCallback(SET_NAVIGATION_D_SIGNAL, &change_d3_val);
-    
+
+    ble.addCallback(ROTATE_180_SIGNAL, &rotate);
+        
     ble.addCallback(SET_MOTOR1_SPEED_SIGNAL, &change_desired_speed_1);
     ble.addCallback(SET_MOTOR2_SPEED_SIGNAL, &change_desired_speed_2);
     
@@ -249,7 +251,7 @@ int main() {
 
                 direction1 = 0;
                 direction2 = 0;
-                
+
                 timeout_turn.attach(&state_normal, 0.5);
 
                 state = normal;
