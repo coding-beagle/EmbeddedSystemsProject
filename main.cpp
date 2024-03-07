@@ -178,6 +178,8 @@ int main() {
 
     DigitalIn button(USER_BUTTON);
 
+    bool isTurning = false;
+
     Timer timer;
     wait(1);// wait for everything to init
     
@@ -218,11 +220,14 @@ int main() {
                 state = normal;
                 break;
             case calculatePID:
-                double sensor_bank_1_error = line_sensor_manager.getAverageSensorValue(1) - line_sensor_manager.getAverageSensorValue(2);
-                double sensor_bank_2_error = line_sensor_manager.getAverageSensorValue(3) - line_sensor_manager.getAverageSensorValue(4);
-                double average_error = (sensor_bank_1_error + sensor_bank_2_error) / 2;
+                double navigation_bias = 0.0;
+                if(!isTurning){
+                    double sensor_bank_1_error = line_sensor_manager.getAverageSensorValue(1) - line_sensor_manager.getAverageSensorValue(2);
+                    double sensor_bank_2_error = line_sensor_manager.getAverageSensorValue(3) - line_sensor_manager.getAverageSensorValue(4);
+                    double average_error = (sensor_bank_1_error + sensor_bank_2_error) / 2;
 
-                double navigation_bias = navigation_controller.calculate(average_error, 0.0);
+                    double navigation_bias = navigation_controller.calculate(average_error, 0.0);
+                }                
 
                 write_val1 = - first_motor_controller.calculate(encoder1.getRPS(), desired_speed_1 + navigation_bias);        // 0.7 is needed because otherwise we spike to 0.0
                 write_val1 = (write_val1 > 1.0) ? write_val1 = 1.0 : (write_val1 <= 0.0) ? write_val1 = 0.7 : write_val1 = write_val1;
@@ -242,12 +247,14 @@ int main() {
 
                 direction1 = 0;
                 direction2 = 1;
+                isTurning = false;
                 state = normal;
                 break;
 
             case rotate180:
                 temp_desired_speed_1 = desired_speed_1;
                 temp_desired_speed_2 = desired_speed_2;
+                isTurning = true;
 
                 desired_speed_1 = 4.0;
                 desired_speed_2 = 4.0;
