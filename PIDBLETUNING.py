@@ -246,6 +246,27 @@ class Root(ctk.CTk):
         input_2 = self.float_to_bytes_le(float(self.entryI2.get()))
         input_3 = self.float_to_bytes_le(float(self.entryD2.get()))
         run_coroutine_threadsafe(self.send_motor2_PIDs_async(input_1, input_2, input_3))
+    
+    async def send_navigational_PIDs_async(self, val_1, val_2, val_3):
+        await self.ble_manager.send_command_with_argument(64, val_1)
+        await self.ble_manager.send_command_with_argument(65, val_2)
+        await self.ble_manager.send_command_with_argument(66, val_3)
+
+    def send_navigational_PIDs(self):
+        input_1 = self.float_to_bytes_le(float(self.entryP3.get()))
+        input_2 = self.float_to_bytes_le(float(self.entryI3.get()))
+        input_3 = self.float_to_bytes_le(float(self.entryD3.get()))
+        run_coroutine_threadsafe(self.send_navigational_PIDs_async(input_1, input_2, input_3))
+
+    def set_speeds_and_send(self, speed_1, speed_2):
+        self.entryMotor1Speed.delete(0, tk.END)
+        self.entryMotor2Speed.delete(0, tk.END)
+
+        self.entryMotor1Speed.insert(0, speed_1)
+        self.entryMotor2Speed.insert(0, speed_2)
+
+        self.send_motor_speeds()
+
 
     def __init__(self):
         super().__init__()
@@ -282,7 +303,7 @@ class Root(ctk.CTk):
         self.commandEntry.place(x=22, y=320)
         self.commandEntry.bind("<Return>", self.send_entry)
     
-        ## PID ADJUSTERS
+        ## PID 1 ADJUSTERS
         self.buttonSendCommand = ctk.CTkButton(self,text="SEND",width=30, command=self.send_entry)
         self.buttonSendCommand.place(x=177, y=320)
 
@@ -309,49 +330,68 @@ class Root(ctk.CTk):
         self.labelMotorPIDs.place(x=250, y=140)
 
         self.entryP2 = ctk.CTkEntry(self, width=50)
-        self.entryP2.place(x=250, y=170)
+        self.entryP2.place(x=250, y=165)
 
         self.entryI2 = ctk.CTkEntry(self, width=50)
-        self.entryI2.place(x=310, y=170)
+        self.entryI2.place(x=310, y=165)
         
         self.entryD2 = ctk.CTkEntry(self, width=50)
-        self.entryD2.place(x=370, y=170)
+        self.entryD2.place(x=370, y=165)
 
         self.buttonSendM2PIDs = ctk.CTkButton(self, text="Send", width=40, command=self.send_motor2_PIDs)
-        self.buttonSendM2PIDs.place(x=430, y=170)
+        self.buttonSendM2PIDs.place(x=430, y=165)
 
         ## PID 2 ADJUSTERS END
+
+        ## PID 3 ADJUSTERS
+
+        self.labelMotorPIDs = ctk.CTkLabel(self, text='Navigational PID Values')
+        self.labelMotorPIDs.place(x=250, y=195)
+
+        self.entryP3 = ctk.CTkEntry(self, width=50)
+        self.entryP3.place(x=250, y=220)
+
+        self.entryI3 = ctk.CTkEntry(self, width=50)
+        self.entryI3.place(x=310, y=220)
+        
+        self.entryD3 = ctk.CTkEntry(self, width=50)
+        self.entryD3.place(x=370, y=220)
+
+        self.buttonSendNAVIPIDs = ctk.CTkButton(self, text="Send", width=40, command=self.send_navigational_PIDs)
+        self.buttonSendNAVIPIDs.place(x=430, y=220)
+
+        ## PID 3 ADJUSTERS END
 
         ## Desired Speed Adjusters
 
         self.labelMotorSpeeds = ctk.CTkLabel(self, text='Motor Speed Set')
-        self.labelMotorSpeeds.place(x=250, y=210)
+        self.labelMotorSpeeds.place(x=250, y=270)
 
         self.entryMotor1Speed = ctk.CTkEntry(self, width=60)
-        self.entryMotor1Speed.place(x=250, y=240)
+        self.entryMotor1Speed.place(x=250, y=300)
 
         self.entryMotor2Speed = ctk.CTkEntry(self, width=60)
-        self.entryMotor2Speed.place(x=320, y=240)
+        self.entryMotor2Speed.place(x=320, y=300)
 
         self.buttonSendSpeeds = ctk.CTkButton(self, text="Send", width=50, command=self.send_motor_speeds)
-        self.buttonSendSpeeds.place(x=390, y=240)
+        self.buttonSendSpeeds.place(x=390, y=300)
 
         ## Desired Speed Adjusters End
     
         self.Label_2 = ctk.CTkLabel(self,text="PID Settings")
         self.Label_2.place(x=250.0, y=59)
+
+        self.button_kill_speeds = ctk.CTkButton(self, text="Stop", width=50, command=lambda: self.set_speeds_and_send("0.0","0.0"))
+        self.button_kill_speeds.place(x=250, y=340)
+
+        self.buttonForwards4 = ctk.CTkButton(self, text="4.0 RPS FW", width=70, command=lambda: self.set_speeds_and_send("4.0", "-4.0"))
+        self.buttonForwards4.place(x=310, y=340)
+
+        self.buttonForwards4 = ctk.CTkButton(self, text="4.0 RPS BW", width=70, command=lambda: self.set_speeds_and_send("-4.0", "4.0"))
+        self.buttonForwards4.place(x=400, y=340)
     
         self.buttonToggleLED = ctk.CTkButton(self,text="Toggle LED",width=50, command=self.toggle_led)
-        self.buttonToggleLED.place(x=247, y=320)
-       
-        self.labelFloatInput = ctk.CTkLabel(self, text="Send Float")
-        self.labelFloatInput.place(x=250.0, y=360.0)
-
-        self.entryFloatInput = ctk.CTkEntry(self)
-        self.entryFloatInput.place(x=250.0, y=390.0)
-
-        self.buttonSendFloat = ctk.CTkButton(self, width=40, text='Send', command=self.send_float)
-        self.buttonSendFloat.place(x=400.0, y=390.0)
+        self.buttonToggleLED.place(x=247, y=390)
     
         self.buttonConnect = ctk.CTkButton(self,text="Connect", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()), width=80)
         self.buttonConnect.place(x=338.0, y=16)
