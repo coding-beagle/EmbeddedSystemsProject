@@ -239,6 +239,9 @@ int main() {
             case revert_speed:
                 desired_speed_1 = temp_desired_speed_1;
                 desired_speed_2 = temp_desired_speed_2;
+
+                direction1 = 0;
+                direction2 = 1;
                 state = normal;
                 break;
 
