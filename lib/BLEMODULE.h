@@ -23,7 +23,7 @@ class HM10{
 
         int input;
 
-        callbacks callbacksArray[10]; // max of ten callbacks i guess
+        callbacks callbacksArray[20]; // max of twenty callbacks i guess
 
         /*  Clears internal callback buffers.
          */
