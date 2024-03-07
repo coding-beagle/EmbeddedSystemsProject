@@ -55,7 +55,8 @@ class BLEDeviceManager:
 
     async def connect(self):
         if self.client is None:
-            self.consoleReference.insert(tk.END, f"Finding devices\n")
+            self.consoleReference.insert(tk.END, f"\nFinding devices\n")
+            self.consoleReference.see(tk.END)
             devices = await BleakScanner.discover()
             self.consoleReference.insert(tk.END, f"\nFound devices:\n")
 
@@ -79,6 +80,8 @@ class BLEDeviceManager:
                 # sub to notifs
                     await self.subscribe_to_notifications("0000ffe1-0000-1000-8000-00805f9b34fb", self.notification_handler)
             except Exception as e:
+                self.consoleReference.insert(tk.END, f"\nDevice Not Found!")
+                self.consoleReference.see(tk.END)
                 print(f"Failed to connect to the device: {e}")
 
     async def disconnect(self):
@@ -90,7 +93,7 @@ class BLEDeviceManager:
             self.consoleReference.insert(tk.END, "\nSuccesfully Disconnected!")
             self.consoleReference.see(tk.END)
             print("Disconnected from the BLE device.")
-            exit()
+            self.client = None
 
     async def send_command(self, command_value, delay_after=0.0):
         if self.connected:
@@ -209,13 +212,6 @@ class Root(ctk.CTk):
         bytes_le = struct.pack('<f', f)
         return list(struct.unpack('4B', bytes_le))
 
-    async def send_float_async(self, f):
-        await self.ble_manager.send_command_with_argument(33, f)
-
-    def send_float(self):
-        input = float(self.entryFloatInput.get())
-        run_coroutine_threadsafe(self.send_float_async(self.float_to_bytes_le(input)))
-
     async def send_motor_speeds_async(self, val_1, val_2):
         await self.ble_manager.send_command_with_argument(40, val_1)
         await self.ble_manager.send_command_with_argument(50, val_2)
@@ -223,6 +219,11 @@ class Root(ctk.CTk):
     def send_motor_speeds(self):
         input_1 = self.float_to_bytes_le(float(self.entryMotor1Speed.get()))
         input_2 = self.float_to_bytes_le(float(self.entryMotor2Speed.get()))
+
+        self.TBcommandLog.insert(tk.END , f"\nMotor 1 Speed = {float(self.entryMotor1Speed.get())}")
+        self.TBcommandLog.insert(tk.END , f"\nMotor 2 Speed = {float(self.entryMotor2Speed.get())}")
+        self.TBcommandLog.see(tk.END)
+
         run_coroutine_threadsafe(self.send_motor_speeds_async(input_1, input_2))
 
     async def send_motor1_PIDs_async(self, val_1, val_2, val_3):
@@ -234,6 +235,12 @@ class Root(ctk.CTk):
         input_1 = self.float_to_bytes_le(float(self.entryP1.get()))
         input_2 = self.float_to_bytes_le(float(self.entryI1.get()))
         input_3 = self.float_to_bytes_le(float(self.entryD1.get()))
+
+        self.TBcommandLog.insert(tk.END , f"\nSetting P1 = {(self.entryP1.get())}")
+        self.TBcommandLog.insert(tk.END , f"\nSetting I1 = {(self.entryI1.get())}")
+        self.TBcommandLog.insert(tk.END , f"\nSetting D1 = {(self.entryD1.get())}")
+        self.TBcommandLog.see(tk.END)
+
         run_coroutine_threadsafe(self.send_motor1_PIDs_async(input_1, input_2, input_3))
 
     async def send_motor2_PIDs_async(self, val_1, val_2, val_3):
@@ -245,6 +252,12 @@ class Root(ctk.CTk):
         input_1 = self.float_to_bytes_le(float(self.entryP2.get()))
         input_2 = self.float_to_bytes_le(float(self.entryI2.get()))
         input_3 = self.float_to_bytes_le(float(self.entryD2.get()))
+
+        self.TBcommandLog.insert(tk.END , f"\nSetting P2 = {(self.entryP2.get())}")
+        self.TBcommandLog.insert(tk.END , f"\nSetting I2 = {(self.entryI2.get())}")
+        self.TBcommandLog.insert(tk.END , f"\nSetting D2 = {(self.entryD2.get())}")
+        self.TBcommandLog.see(tk.END)
+
         run_coroutine_threadsafe(self.send_motor2_PIDs_async(input_1, input_2, input_3))
     
     async def send_navigational_PIDs_async(self, val_1, val_2, val_3):
