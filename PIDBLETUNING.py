@@ -20,13 +20,11 @@ CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb"
 # ble handling functionality
 
 class BLEDeviceManager:
-    def __init__(self, device_name, response_callback = None, updaterps1cb = None, updaterps2cb = None):
+    def __init__(self, device_name, response_callback = None):
         self.device_name = device_name
         self.client = None
         self.connected = False
         self.response_callback = response_callback
-        self.update_rps1_callback = updaterps1cb
-        self.update_rps2_callback = updaterps2cb
         self.consoleReference = None
         self.rps1 = 0.0
         self.rps2 = 0.0
@@ -39,19 +37,8 @@ class BLEDeviceManager:
         except UnicodeDecodeError:
             message = "Bad decoding!"
 
-        match_rps1 = re.match(r"RPS1 = ([\d.]+)", message)
-        if match_rps1:
-            self.rps1 = float(match_rps1.group(1))
-            self.update_rps1_callback(self.rps1)
-
-        match_rps2 = re.match(r"RPS2 = ([\d.]+)", message)
-        if match_rps2:
-            self.rps2 = float(match_rps2.group(1))
-            self.update_rps2_callback(self.rps2)
-            
-        if(not(match_rps1) and not(match_rps2)):
-            if self.response_callback:
-                self.response_callback(message)
+        if self.response_callback:
+            self.response_callback(message)
 
     async def connect(self):
         if self.client is None:
@@ -170,36 +157,11 @@ class Root(ctk.CTk):
         # adds response of ble to console window
         self.TBcommandLog.insert(tk.END, f"\nResponse: {response}")
         self.TBcommandLog.see(tk.END)
-
-    def toggle_led(self):
-        self.TBcommandLog.insert(tk.END ,"\nToggling LED")
+    
+    def send_command_with_text(self, number, string):
+        self.TBcommandLog.insert(tk.END ,f"\n{string}")
         self.TBcommandLog.see(tk.END)
-        run_coroutine_threadsafe(self.ble_manager.send_command(99))
-
-    def toggle_RPS_count(self):
-        self.TBcommandLog.insert(tk.END ,"\nToggling RPS Counter")
-        self.TBcommandLog.see(tk.END)
-        run_coroutine_threadsafe(self.ble_manager.send_command(50))
-
-    def enable_disable(self):
-        if(self.enabled):
-            self.TBcommandLog.insert(tk.END ,"\nDisabling Motors")
-            self.TBcommandLog.see(tk.END)
-            run_coroutine_threadsafe(self.ble_manager.send_command(13))
-            self.enabled = False
-        else:
-            self.enabled = False
-            self.TBcommandLog.insert(tk.END ,"\nEnabling Motors")
-            self.TBcommandLog.see(tk.END)
-            run_coroutine_threadsafe(self.ble_manager.send_command(13))
-
-    def update_rps1(self, val):
-        self.labelWheel1SPEED.configure(text=val)
-        self.sliderRPS1.set(val)
-
-    def update_rps2(self, val):
-        self.labelWheel2SPEED.configure(text=val)
-        self.sliderRPS2.set(val)
+        run_coroutine_threadsafe(self.ble_manager.send_command(number))
 
     def send_entry(self, e=None):
         value_to_send = self.commandEntry.get()
@@ -286,8 +248,6 @@ class Root(ctk.CTk):
         self.enabled = True
         self.ble_manager = BLEDeviceManager("ZhipengBL")
         self.ble_manager.response_callback = self.update_response
-        self.ble_manager.update_rps1_callback = self.update_rps1
-        self.ble_manager.update_rps2_callback = self.update_rps2
         
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -403,9 +363,12 @@ class Root(ctk.CTk):
         self.buttonForwards4 = ctk.CTkButton(self, text="4.0 RPS BW", width=70, command=lambda: self.set_speeds_and_send("-4.0", "4.0"))
         self.buttonForwards4.place(x=400, y=340)
     
-        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle LED",width=50, command=self.toggle_led)
-        self.buttonToggleLED.place(x=247, y=390)
+        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle LED",width=50, command=lambda: self.send_command_with_text(99, "Toggling LED"))
+        self.buttonToggleLED.place(x=250, y=390)
     
+        self.buttonRotate = ctk.CTkButton(self, text="Rotate 180 Degrees", command=lambda: self.send_command_with_text(77, "Rotating 180 degrees"))
+        self.buttonRotate.place(x=340, y=390)
+
         self.buttonConnect = ctk.CTkButton(self,text="Connect", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()), width=80)
         self.buttonConnect.place(x=338.0, y=16)
 
