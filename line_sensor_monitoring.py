@@ -41,6 +41,8 @@ rl = ReadLine(ser)
 xpoints = np.array([])
 ypoints1 = np.array([])
 ypoints2 = np.array([])
+ypoints3 = np.array([])
+ypoints4 = np.array([])
 
 plt.ion()  # Enable interactive mode
 fig, axs = plt.subplots(2, 2)
