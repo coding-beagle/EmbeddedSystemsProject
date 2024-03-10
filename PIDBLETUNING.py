@@ -231,6 +231,12 @@ class Root(ctk.CTk):
         input_1 = self.float_to_bytes_le(float(self.entryP3.get()))
         input_2 = self.float_to_bytes_le(float(self.entryI3.get()))
         input_3 = self.float_to_bytes_le(float(self.entryD3.get()))
+
+        self.TBcommandLog.insert(tk.END , f"\nSetting P3 = {(self.entryP3.get())}")
+        self.TBcommandLog.insert(tk.END , f"\nSetting I3 = {(self.entryI3.get())}")
+        self.TBcommandLog.insert(tk.END , f"\nSetting D3 = {(self.entryD3.get())}")
+        self.TBcommandLog.see(tk.END)
+
         run_coroutine_threadsafe(self.send_navigational_PIDs_async(input_1, input_2, input_3))
 
     def set_speeds_and_send(self, speed_1, speed_2):
@@ -261,24 +267,24 @@ class Root(ctk.CTk):
         self.resizable(False, False)
     
         self.labelTitle = ctk.CTkLabel(self,text="WQY BLE APP",font=('roboto', -30))
-        self.labelTitle.place(x=23, y=16)
+        self.labelTitle.place(x=20, y=15)
     
         self.TBcommandLog = ctk.CTkTextbox(self,height=220)
-        self.TBcommandLog.place(x=23.0, y=89)
+        self.TBcommandLog.place(x=20.0, y=90)
         self.TBcommandLog.bind("<Key>", lambda e: "break")
 
         self.ble_manager.consoleReference = self.TBcommandLog
 
         self.labelConsoleLog = ctk.CTkLabel(self,text="Console Log")
-        self.labelConsoleLog.place(x=25, y=59)
+        self.labelConsoleLog.place(x=20, y=60)
     
         self.commandEntry = ctk.CTkEntry(self)
-        self.commandEntry.place(x=22, y=320)
+        self.commandEntry.place(x=20, y=320)
         self.commandEntry.bind("<Return>", self.send_entry)
     
         ## PID 1 ADJUSTERS
         self.buttonSendCommand = ctk.CTkButton(self,text="SEND",width=30, command=self.send_entry)
-        self.buttonSendCommand.place(x=177, y=320)
+        self.buttonSendCommand.place(x=175, y=320)
 
         self.labelMotorPIDs = ctk.CTkLabel(self, text='Motor 1 PID Values')
         self.labelMotorPIDs.place(x=250, y=85)
@@ -338,16 +344,16 @@ class Root(ctk.CTk):
         ## Desired Speed Adjusters
 
         self.labelMotorSpeeds = ctk.CTkLabel(self, text='Motor Speed Set')
-        self.labelMotorSpeeds.place(x=250, y=270)
+        self.labelMotorSpeeds.place(x=250, y=250)
 
         self.entryMotor1Speed = ctk.CTkEntry(self, width=60)
-        self.entryMotor1Speed.place(x=250, y=300)
+        self.entryMotor1Speed.place(x=250, y=275)
 
         self.entryMotor2Speed = ctk.CTkEntry(self, width=60)
-        self.entryMotor2Speed.place(x=320, y=300)
+        self.entryMotor2Speed.place(x=320, y=275)
 
         self.buttonSendSpeeds = ctk.CTkButton(self, text="Send", width=50, command=self.send_motor_speeds)
-        self.buttonSendSpeeds.place(x=390, y=300)
+        self.buttonSendSpeeds.place(x=390, y=275)
 
         ## Desired Speed Adjusters End
     
@@ -355,19 +361,28 @@ class Root(ctk.CTk):
         self.Label_2.place(x=250.0, y=59)
 
         self.button_kill_speeds = ctk.CTkButton(self, text="Stop", width=50, command=lambda: self.set_speeds_and_send("0.0","0.0"))
-        self.button_kill_speeds.place(x=250, y=340)
+        self.button_kill_speeds.place(x=250, y=320)
 
-        self.buttonForwards4 = ctk.CTkButton(self, text="4.0 RPS FW", width=70, command=lambda: self.set_speeds_and_send("4.0", "-4.0"))
-        self.buttonForwards4.place(x=310, y=340)
+        self.buttonForwards2 = ctk.CTkButton(self, text="2.0 FW", width=50, command=lambda: self.set_speeds_and_send("2.0", "-2.0"))
+        self.buttonForwards2.place(x=310, y=320)
 
-        self.buttonForwards4 = ctk.CTkButton(self, text="4.0 RPS BW", width=70, command=lambda: self.set_speeds_and_send("-4.0", "4.0"))
-        self.buttonForwards4.place(x=400, y=340)
+        self.buttonForwards4 = ctk.CTkButton(self, text="4.0 FW", width=50, command=lambda: self.set_speeds_and_send("4.0", "-4.0"))
+        self.buttonForwards4.place(x=370, y=320)
+
+        self.buttonForwards4 = ctk.CTkButton(self, text="6.0 FW", width=50, command=lambda: self.set_speeds_and_send("6.0", "-6.0"))
+        self.buttonForwards4.place(x=250, y=355)
     
-        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle LED",width=50, command=lambda: self.send_command_with_text(99, "Toggling LED"))
-        self.buttonToggleLED.place(x=250, y=390)
+        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle LED",width=100, command=lambda: self.send_command_with_text(99, "Toggling LED"))
+        self.buttonToggleLED.place(x=20, y=355)
+
+        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle Stop",width=110, command=lambda: self.send_command_with_text(88, "Toggling Stop Condition"))
+        self.buttonToggleLED.place(x=130, y=355)
+
+        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle Print Encoders / Line Sensors", width=100, command=lambda: self.send_command_with_text(22, f"Toggling Encoder / Line Sensor Serial Print"))
+        self.buttonToggleLED.place(x=20, y=390)
     
         self.buttonRotate = ctk.CTkButton(self, text="Rotate 180 Degrees", command=lambda: self.send_command_with_text(77, "Rotating 180 degrees"))
-        self.buttonRotate.place(x=340, y=390)
+        self.buttonRotate.place(x=310, y=355)
 
         self.buttonConnect = ctk.CTkButton(self,text="Connect", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()), width=80)
         self.buttonConnect.place(x=338.0, y=16)
