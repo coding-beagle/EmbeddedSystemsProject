@@ -191,9 +191,9 @@ class Root(ctk.CTk):
         run_coroutine_threadsafe(self.send_motor_speeds_async(input_1, input_2))
 
     async def send_motor1_PIDs_async(self, val_1, val_2, val_3):
-        await self.ble_manager.send_command_with_argument(44, val_1)
-        await self.ble_manager.send_command_with_argument(45, val_2)
-        await self.ble_manager.send_command_with_argument(46, val_3)
+        await self.ble_manager.send_command_with_argument(44, val_1, 0.2)
+        await self.ble_manager.send_command_with_argument(45, val_2, 0.2)
+        await self.ble_manager.send_command_with_argument(46, val_3, 0.2)
 
     def send_motor1_PIDs(self):
         input_1 = self.float_to_bytes_le(float(self.entryP1.get()))
@@ -208,9 +208,9 @@ class Root(ctk.CTk):
         run_coroutine_threadsafe(self.send_motor1_PIDs_async(input_1, input_2, input_3))
 
     async def send_motor2_PIDs_async(self, val_1, val_2, val_3):
-        await self.ble_manager.send_command_with_argument(54, val_1)
-        await self.ble_manager.send_command_with_argument(55, val_2)
-        await self.ble_manager.send_command_with_argument(56, val_3)
+        await self.ble_manager.send_command_with_argument(54, val_1, 0.2)
+        await self.ble_manager.send_command_with_argument(55, val_2, 0.2)
+        await self.ble_manager.send_command_with_argument(56, val_3, 0.2)
 
     def send_motor2_PIDs(self):
         input_1 = self.float_to_bytes_le(float(self.entryP2.get()))
@@ -225,9 +225,9 @@ class Root(ctk.CTk):
         run_coroutine_threadsafe(self.send_motor2_PIDs_async(input_1, input_2, input_3))
     
     async def send_navigational_PIDs_async(self, val_1, val_2, val_3):
-        await self.ble_manager.send_command_with_argument(64, val_1)
-        await self.ble_manager.send_command_with_argument(65, val_2)
-        await self.ble_manager.send_command_with_argument(66, val_3)
+        await self.ble_manager.send_command_with_argument(64, val_1, 0.2)
+        await self.ble_manager.send_command_with_argument(65, val_2, 0.2)
+        await self.ble_manager.send_command_with_argument(66, val_3, 0.2)
 
     def send_navigational_PIDs(self):
         input_1 = self.float_to_bytes_le(float(self.entryP3.get()))
