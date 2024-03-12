@@ -175,10 +175,10 @@ class Root(ctk.CTk):
         return list(struct.unpack('4B', bytes_le))
 
     async def send_motor_speeds_async(self, val_1, val_2):
-        await self.ble_manager.send_command(95)
-        await self.ble_manager.send_command_with_argument(40, val_1)
-        await self.ble_manager.send_command_with_argument(50, val_2)
-        await self.ble_manager.send_command(95)
+        # await self.ble_manager.send_command(95)
+        await self.ble_manager.send_command_with_argument(40, val_1, 0.3)
+        await self.ble_manager.send_command_with_argument(50, val_2, 0.3)
+        # await self.ble_manager.send_command(95)
 
     def send_motor_speeds(self):
         input_1 = self.float_to_bytes_le(float(self.entryMotor1Speed.get()))
@@ -382,6 +382,9 @@ class Root(ctk.CTk):
 
         self.buttonToggleLED = ctk.CTkButton(self,text="Toggle Print Encoders / Line Sensors", width=100, command=lambda: self.send_command_with_text(22, f"Toggling Encoder / Line Sensor Serial Print"))
         self.buttonToggleLED.place(x=20, y=390)
+
+        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle Serial Print", width=60, command=lambda: self.send_command_with_text(23, f"Toggling Serial Print"))
+        self.buttonToggleLED.place(x=20, y=425)
     
         self.buttonRotate = ctk.CTkButton(self, text="Rotate 180 Degrees", command=lambda: self.send_command_with_text(77, "Rotating 180 degrees"))
         self.buttonRotate.place(x=310, y=355)
