@@ -4,7 +4,7 @@
 
 class Encoder{
     private:
-        InterruptIn channelA;
+        InterruptIn channelA, channelB;
         int pulses, revolutions, pulses_per_rev, rps_index;
         float RPS, wheel_diameter, calc_period;
         Ticker t;
@@ -15,7 +15,7 @@ class Encoder{
         void calculateRPS();
 
     public:
-        Encoder(PinName channel, int PPR, float wheel, float period);
+        Encoder(PinName channel1, PinName channel2, int PPR, float wheel, float period);
         
         int getPulses();
 

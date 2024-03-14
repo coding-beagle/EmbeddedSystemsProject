@@ -12,9 +12,11 @@ void Encoder::calculateRPS(){
     clearPulses();
 }
 
-Encoder::Encoder(PinName channel, int PPR, float wheel, float period): channelA(channel), pulses_per_rev(PPR), wheel_diameter(wheel), calc_period(period){
+Encoder::Encoder(PinName channel1, PinName channel2, int PPR, float wheel, float period): channelA(channel1) ,channelB(channel2), pulses_per_rev(PPR), wheel_diameter(wheel), calc_period(period){
     channelA.rise(callback(this, &Encoder::increment));
     channelA.fall(callback(this, &Encoder::increment));
+    channelB.rise(callback(this, &Encoder::increment));
+    channelB.fall(callback(this, &Encoder::increment));
     t.attach(callback(this, &Encoder::calculateRPS), calc_period);
     rps_index = 0;
     clearPulses();
@@ -38,7 +40,9 @@ float Encoder::getRPS(){
     for(int i = 0; i < 5; i++){
         sum += previous_rps[i];
     }
-    return sum / 5.0;
+
+    // divide by 10.0 because we have 4x
+    return sum / 10.0;
 }
 
 float Encoder::getDistanceM(){

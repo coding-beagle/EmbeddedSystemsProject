@@ -6,6 +6,7 @@
 #define NUMBER_OF_BAUDS 9
 #define COMMAND_LENGTH 2
 #define OUTPUT_BUFFER_SIZE 50
+#define NUMBER_OF_COMMANDS 22
 
 class HM10{
     private:
@@ -23,7 +24,7 @@ class HM10{
 
         int input;
 
-        callbacks callbacksArray[10]; // max of ten callbacks i guess
+        callbacks callbacksArray[NUMBER_OF_COMMANDS]; // max of ten callbacks i guess
 
         /*  Clears internal callback buffers.
          */
@@ -101,8 +102,8 @@ class HM10{
          *  
          *  If the function requires an int, then we expect one value 
          *  through bluetooth (uint8_t).
-         *  If the function requires a float, then we expect two values
-         *  (uint8_t) x 2. See ints_to_half_float for details on decoding
+         *  If the function requires a float, then we expect four values
+         *  (uint8_t) x 4. See incoming_to_float for details on decoding
          */
         void doBLE();
 
