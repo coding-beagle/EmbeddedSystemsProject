@@ -3,7 +3,8 @@
 #include <cstdint>
 
 void HM10::init(){
-    for(int i = 0; i<10; i++){
+    for(int i = 0; i<NUMBER_OF_COMMANDS; i++){
+        callbacksArray[i].signal = -1;
         callbacksArray[i].inUse = false;
         callbacksArray[i].takesInt = false;
         callbacksArray[i].takesFloat = false;
@@ -33,8 +34,8 @@ float HM10::incoming_to_float(){
             float asFloat;
         } u;
 
-        u.asInt = output;
-        return u.asFloat;
+    u.asInt = output;
+    return u.asFloat;
 }
 
 int HM10::setBaud(int baud){
@@ -56,7 +57,7 @@ int HM10::setBaud(int baud){
 }
     
 int HM10::addCallback(int signal, Callback<void()> cb){
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < NUMBER_OF_COMMANDS; i++){
         if(callbacksArray[i].inUse == false){
             callbacksArray[i].signal = signal;
             callbacksArray[i].callback = cb;
@@ -69,12 +70,13 @@ int HM10::addCallback(int signal, Callback<void()> cb){
 }
 
 int HM10::addCallback(int signal, Callback<void(int)> cb){
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < NUMBER_OF_COMMANDS; i++){
         if(callbacksArray[i].inUse == false){
             callbacksArray[i].signal = signal;
             callbacksArray[i].callback_int = cb;
             callbacksArray[i].inUse = true;
             callbacksArray[i].takesInt = true;
+            callbacksArray[i].takesFloat = false;
             return 0;
         }
     }
@@ -83,11 +85,12 @@ int HM10::addCallback(int signal, Callback<void(int)> cb){
 }
 
 int HM10::addCallback(int signal, Callback<void(float)> cb){
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < NUMBER_OF_COMMANDS; i++){
         if(callbacksArray[i].inUse == false){
             callbacksArray[i].signal = signal;
             callbacksArray[i].callback_float = cb;
             callbacksArray[i].inUse = true;
+            callbacksArray[i].takesInt = false;
             callbacksArray[i].takesFloat = true;
             return 0;
         }
@@ -98,7 +101,7 @@ int HM10::addCallback(int signal, Callback<void(float)> cb){
 
 int HM10::removeCallback(int signal){
     int i = 0;
-    for(i; i<sizeof(callbacksArray)/sizeof(callbacks);i++){
+    for(i; i<NUMBER_OF_COMMANDS;i++){
         if(signal == callbacksArray[i].signal){
                 callbacksArray[i].inUse = false;
                 callbacksArray[i].signal = 0;
@@ -129,7 +132,7 @@ void HM10::doBLE(){
     if(bleModule.readable()){
         int c = bleModule.getc();
         
-        for(int i = 0; i<sizeof(callbacksArray)/sizeof(callbacks);i++){     // find if the signal matches an existing callback in array
+        for(int i = 0; i<NUMBER_OF_COMMANDS;i++){     // find if the signal matches an existing callback in array
             
             if(c == callbacksArray[i].signal){
                 if(callbacksArray[i].takesInt){
@@ -143,8 +146,8 @@ void HM10::doBLE(){
                     float float_arg = incoming_to_float();
                     callbacksArray[i].callback_float(float_arg);
                     char toTransmit[30];
-                    printf("(From Class) Executed with %f\n", float_arg);
-                    sprintf(toTransmit, "Executed with %f", float_arg);
+                    // printf("(From Class) Executed with %f\n", float_arg);
+                    sprintf(toTransmit, "Executed with %.3f", float_arg);
                     transmitData(toTransmit, 30);
                 }
                 else{
