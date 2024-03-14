@@ -32,7 +32,7 @@ class ReadLine:
                 self.buf.extend(data)
 
 # Main script
-port = 'COM9'  # Serial port to use
+port = 'COM21'  # Serial port to use
 ser = serial.Serial(port, 9600)
 rl = ReadLine(ser)
 

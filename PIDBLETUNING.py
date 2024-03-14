@@ -400,6 +400,9 @@ class Root(ctk.CTk):
         self.buttonEnable = ctk.CTkButton(self, text="Enable", width=70, command=lambda: self.send_command_with_text(95, "Toggle Motors On/Off"))
         self.buttonEnable.place(x=250, y=390)
 
+        self.buttonEnable = ctk.CTkButton(self, text="Use Sensors", width=70, command=lambda: self.send_command_with_text(35, "Toggle Sensor Usage"))
+        self.buttonEnable.place(x=328, y=390)
+
         self.buttonConnect = ctk.CTkButton(self,text="Connect", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()), width=80)
         self.buttonConnect.place(x=338.0, y=16)
 
