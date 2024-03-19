@@ -250,6 +250,21 @@ class Root(ctk.CTk):
 
         run_coroutine_threadsafe(self.send_pids_async(input_1, input_2, input_3, command_tuple))
 
+    def disable_motors_and_update_gui(self, arg):
+        self.send_command_with_text(34, "Disabling Motors")
+        self.buttonEnable.deselect()
+    
+    def enable_motors_and_update_gui(self, arg):
+        self.send_command_with_text(33, "Enabling Motors")
+        self.buttonEnable.select()
+
+    def toggle_serial(self, arg):
+        self.send_command_with_text(23, "Toggling Serial Print")
+        if(self.buttonTogglePrint.get()):
+            self.buttonTogglePrint.deselect()
+        else:
+            self.buttonTogglePrint.select()
+
     def __init__(self):
         super().__init__()
         self.enabled = True
@@ -403,6 +418,14 @@ class Root(ctk.CTk):
 
         self.buttonDisconnect = ctk.CTkButton(self,text="Disconnect", command=lambda: run_coroutine_threadsafe(self.ble_manager.disconnect()), width= 80)
         self.buttonDisconnect.place(x=250.0, y=16)
+
+        self.bind_all("<space>", lambda e: self.send_command_with_text(77, "Rotating 180 degrees"))
+        self.bind_all("<d>", self.disable_motors_and_update_gui)
+        self.bind_all("<e>", self.enable_motors_and_update_gui)
+
+        self.bind_all("<s>", self.toggle_serial)
+
+        self.bind_all("<Escape>", lambda e: self.focus())
 
 
 threading.Thread(target=start_asyncio_loop, daemon=True).start()
