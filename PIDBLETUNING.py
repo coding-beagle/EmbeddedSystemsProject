@@ -26,8 +26,7 @@ class BLEDeviceManager:
         self.connected = False
         self.response_callback = response_callback
         self.consoleReference = None
-        self.rps1 = 0.0
-        self.rps2 = 0.0
+        self.wait_event = asyncio.Event()  # Added event for synchronization
 
     async def notification_handler(self, sender, data):
         # convert data to a string or process it as needed
@@ -36,9 +35,22 @@ class BLEDeviceManager:
             message = data.decode('utf-8')
         except UnicodeDecodeError:
             message = "Bad decoding!"
+        ic(message)
 
-        if self.response_callback:
+        if message == "RCVD\x00\x00":
+            self.wait_event.set()
+            ic("Check Passed!")
+
+        if self.response_callback and message != "RCVD\x00\x00":
             self.response_callback(message)
+
+    async def wait_for_response_or_timeout(self, timeout):
+        try:
+            await asyncio.wait_for(self.wait_event.wait(), timeout)
+        except asyncio.TimeoutError:
+            print("Timeout waiting for response.")
+        finally:
+            self.wait_event.clear()  # Reset the event for the next use
 
     async def connect(self):
         if self.client is None:
@@ -91,6 +103,8 @@ class BLEDeviceManager:
                 await asyncio.sleep(delay_after)  # wait for a specified delay after sending the command
         else:
             print("Device is not connected.")
+            self.consoleReference.insert(tk.END, "\nDevice is not connected you pepega")
+            self.consoleReference.see(tk.END)
 
     async def subscribe_to_notifications(self, characteristic_uuid, handler):
         if self.connected:
@@ -99,30 +113,34 @@ class BLEDeviceManager:
         else:
             print("Device is not connected.")
     
-    async def send_command_with_argument(self, command, arg=None, delay_between=0.1):
-        # ensure there's a connection
+    async def send_command_with_argument(self, command, arg=None, delay_between=0.1, wait_for_rcvd=False, timeout=0.3):
         if not self.connected:
             print("Device not connected.")
             return
-        
-        # convert and send the command
+
         command_bytes = command.to_bytes(1, byteorder='little')
         await self.client.write_gatt_char(CHARACTERISTIC_UUID, command_bytes)
         print(f"Command {command} sent.")
-        
-        # if an argument is provided, wait a bit and then send it
+
+        num_sent = 0
+
         if arg is not None:
-            if(isinstance(arg, int)):
-                await asyncio.sleep(delay_between)  # wait for the device to process the command
+            if isinstance(arg, int):
+                await asyncio.sleep(delay_between)
                 arg_bytes = arg.to_bytes(1, byteorder='little')
                 await self.client.write_gatt_char(CHARACTERISTIC_UUID, arg_bytes)
+                
                 print(f"Argument {arg} sent.")
-            if(isinstance(arg, list)):
-                print(f"Called, {arg}")
+                
+            elif isinstance(arg, list):
                 for i in arg:
-                    await asyncio.sleep(delay_between)  # wait for the device to process the command
+                    # await asyncio.sleep(delay_between)
                     arg_bytes = i.to_bytes(1, byteorder='little')
                     await self.client.write_gatt_char(CHARACTERISTIC_UUID, arg_bytes)
+                    # print(f"Sending {int(arg_bytes)}")
+                    if wait_for_rcvd:
+                        await self.wait_for_response_or_timeout(timeout)
+                    num_sent += 1
                 print(f"Argument {arg} sent.")
 
 loop = None  # global variable to hold the loop reference 
@@ -177,8 +195,9 @@ class Root(ctk.CTk):
     async def send_motor_speeds_async(self, val_1, val_2):
         # await self.ble_manager.send_command(95)
         await self.ble_manager.send_command(34, 0.1)
-        await self.ble_manager.send_command_with_argument(40, val_1, 0.3)
-        await self.ble_manager.send_command_with_argument(50, val_2, 0.3)
+        await self.ble_manager.send_command_with_argument(40, val_1, 0.3, True)
+        await asyncio.sleep(0.05)
+        await self.ble_manager.send_command_with_argument(50, val_2, 0.3, True)
         await self.ble_manager.send_command(33, 0.1)
         # await self.ble_manager.send_command(95)
 
@@ -192,63 +211,6 @@ class Root(ctk.CTk):
 
         run_coroutine_threadsafe(self.send_motor_speeds_async(input_1, input_2))
 
-    async def send_motor1_PIDs_async(self, val_1, val_2, val_3):
-        await self.ble_manager.send_command(34, 0.1)
-        await self.ble_manager.send_command_with_argument(44, val_1, 0.2)
-        await self.ble_manager.send_command_with_argument(45, val_2, 0.2)
-        await self.ble_manager.send_command_with_argument(46, val_3, 0.2)
-        await self.ble_manager.send_command(33, 0.1)
-
-    def send_motor1_PIDs(self):
-        input_1 = self.float_to_bytes_le(float(self.entryP1.get()))
-        input_2 = self.float_to_bytes_le(float(self.entryI1.get()))
-        input_3 = self.float_to_bytes_le(float(self.entryD1.get()))
-
-        self.TBcommandLog.insert(tk.END , f"\nSetting P1 = {(self.entryP1.get())}")
-        self.TBcommandLog.insert(tk.END , f"\nSetting I1 = {(self.entryI1.get())}")
-        self.TBcommandLog.insert(tk.END , f"\nSetting D1 = {(self.entryD1.get())}")
-        self.TBcommandLog.see(tk.END)
-
-        run_coroutine_threadsafe(self.send_motor1_PIDs_async(input_1, input_2, input_3))
-
-    async def send_motor2_PIDs_async(self, val_1, val_2, val_3):
-        await self.ble_manager.send_command(34, 0.1)
-        await self.ble_manager.send_command_with_argument(54, val_1, 0.2)
-        await self.ble_manager.send_command_with_argument(55, val_2, 0.2)
-        await self.ble_manager.send_command_with_argument(56, val_3, 0.2)
-        await self.ble_manager.send_command(33, 0.1)
-
-    def send_motor2_PIDs(self):
-        input_1 = self.float_to_bytes_le(float(self.entryP2.get()))
-        input_2 = self.float_to_bytes_le(float(self.entryI2.get()))
-        input_3 = self.float_to_bytes_le(float(self.entryD2.get()))
-
-        self.TBcommandLog.insert(tk.END , f"\nSetting P2 = {(self.entryP2.get())}")
-        self.TBcommandLog.insert(tk.END , f"\nSetting I2 = {(self.entryI2.get())}")
-        self.TBcommandLog.insert(tk.END , f"\nSetting D2 = {(self.entryD2.get())}")
-        self.TBcommandLog.see(tk.END)
-
-        run_coroutine_threadsafe(self.send_motor2_PIDs_async(input_1, input_2, input_3))
-    
-    async def send_navigational_PIDs_async(self, val_1, val_2, val_3):
-        await self.ble_manager.send_command(34, 0.1)
-        await self.ble_manager.send_command_with_argument(64, val_1, 0.2)
-        await self.ble_manager.send_command_with_argument(65, val_2, 0.2)
-        await self.ble_manager.send_command_with_argument(66, val_3, 0.2)
-        await self.ble_manager.send_command(33, 0.1)
-
-    def send_navigational_PIDs(self):
-        input_1 = self.float_to_bytes_le(float(self.entryP3.get()))
-        input_2 = self.float_to_bytes_le(float(self.entryI3.get()))
-        input_3 = self.float_to_bytes_le(float(self.entryD3.get()))
-
-        self.TBcommandLog.insert(tk.END , f"\nSetting P3 = {(self.entryP3.get())}")
-        self.TBcommandLog.insert(tk.END , f"\nSetting I3 = {(self.entryI3.get())}")
-        self.TBcommandLog.insert(tk.END , f"\nSetting D3 = {(self.entryD3.get())}")
-        self.TBcommandLog.see(tk.END)
-
-        run_coroutine_threadsafe(self.send_navigational_PIDs_async(input_1, input_2, input_3))
-
     def set_speeds_and_send(self, speed_1, speed_2):
         self.entryMotor1Speed.delete(0, tk.END)
         self.entryMotor2Speed.delete(0, tk.END)
@@ -257,7 +219,36 @@ class Root(ctk.CTk):
         self.entryMotor2Speed.insert(0, speed_2)
 
         self.send_motor_speeds()
+    
+    async def send_pids_async(self, val_1, val_2, val_3, command_tuple):
+        await self.ble_manager.send_command(34, 0.1) # disable motors
+        if(val_1 is not None):
+            await self.ble_manager.send_command_with_argument(command_tuple[0], val_1, 0.15, True)
+        if(val_2 is not None):
+            await self.ble_manager.send_command_with_argument(command_tuple[1], val_2, 0.15, True)
+        if(val_3 is not None):
+            await self.ble_manager.send_command_with_argument(command_tuple[2], val_3, 0.15, True)
+        await self.ble_manager.send_command(33, 0.1) # reenable
 
+    def send_pids(self, entry_1, entry_2, entry_3, pid_name, command_tuple):
+        # run_coroutine_threadsafe(self.ble_manager.send_command(34, 0.1))
+        try:
+            input_1 = self.float_to_bytes_le(float(entry_1.get()))
+        except:
+            input_1 = None
+        try:
+            input_2 = self.float_to_bytes_le(float(entry_2.get()))
+        except:
+            input_2 = None
+        try:
+            input_3 = self.float_to_bytes_le(float(entry_3.get()))
+        except:
+            input_3 = None
+        self.TBcommandLog.insert(tk.END , f"\nSetting {pid_name} P = {entry_1.get()}")
+        self.TBcommandLog.insert(tk.END , f"\nSetting {pid_name} I = {entry_2.get()}")
+        self.TBcommandLog.insert(tk.END , f"\nSetting {pid_name} D = {entry_3.get()}")
+
+        run_coroutine_threadsafe(self.send_pids_async(input_1, input_2, input_3, command_tuple))
 
     def __init__(self):
         super().__init__()
@@ -291,11 +282,11 @@ class Root(ctk.CTk):
         self.commandEntry = ctk.CTkEntry(self)
         self.commandEntry.place(x=20, y=320)
         self.commandEntry.bind("<Return>", self.send_entry)
-    
-        ## PID 1 ADJUSTERS
+        
         self.buttonSendCommand = ctk.CTkButton(self,text="SEND",width=30, command=self.send_entry)
         self.buttonSendCommand.place(x=175, y=320)
-
+    
+        ## PID 1 ADJUSTERS
         self.labelMotorPIDs = ctk.CTkLabel(self, text='Motor 1 PID Values')
         self.labelMotorPIDs.place(x=250, y=85)
 
@@ -308,7 +299,7 @@ class Root(ctk.CTk):
         self.entryD1 = ctk.CTkEntry(self, width=50)
         self.entryD1.place(x=370, y=110)
 
-        self.buttonSendM1PIDs = ctk.CTkButton(self, text="Send", width=40, command=self.send_motor1_PIDs)
+        self.buttonSendM1PIDs = ctk.CTkButton(self, text="Send", width=40, command= lambda e1= self.entryP1, e2= self.entryI1, e3=self.entryD1: self.send_pids(e1, e2, e3, "Motor 1", (44, 45, 46)) )
         self.buttonSendM1PIDs.place(x=430, y=110)
 
         ## PID 1 ADJUSTERS END
@@ -327,7 +318,7 @@ class Root(ctk.CTk):
         self.entryD2 = ctk.CTkEntry(self, width=50)
         self.entryD2.place(x=370, y=165)
 
-        self.buttonSendM2PIDs = ctk.CTkButton(self, text="Send", width=40, command=self.send_motor2_PIDs)
+        self.buttonSendM2PIDs = ctk.CTkButton(self, text="Send", width=40, command= lambda e1= self.entryP2, e2= self.entryI2, e3=self.entryD2: self.send_pids(e1, e2, e3, "Motor 2", (54, 55, 56)))
         self.buttonSendM2PIDs.place(x=430, y=165)
 
         ## PID 2 ADJUSTERS END
@@ -346,7 +337,7 @@ class Root(ctk.CTk):
         self.entryD3 = ctk.CTkEntry(self, width=50)
         self.entryD3.place(x=370, y=220)
 
-        self.buttonSendNAVIPIDs = ctk.CTkButton(self, text="Send", width=40, command=self.send_navigational_PIDs)
+        self.buttonSendNAVIPIDs = ctk.CTkButton(self, text="Send", width=40, command= lambda e1= self.entryP3, e2= self.entryI3, e3=self.entryD3: self.send_pids(e1, e2, e3, "Navig", (64, 65, 66)))
         self.buttonSendNAVIPIDs.place(x=430, y=220)
 
         ## PID 3 ADJUSTERS END
@@ -382,26 +373,30 @@ class Root(ctk.CTk):
         self.buttonForwards4 = ctk.CTkButton(self, text="6.0 FW", width=50, command=lambda: self.set_speeds_and_send("6.0", "-6.0"))
         self.buttonForwards4.place(x=250, y=355)
     
-        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle LED",width=100, command=lambda: self.send_command_with_text(99, "Toggling LED"))
+        self.buttonToggleLED = ctk.CTkSwitch(self,text="Toggle LED",width=100, command=lambda: self.send_command_with_text(99, "Toggling LED"))
         self.buttonToggleLED.place(x=20, y=355)
 
-        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle Stop",width=110, command=lambda: self.send_command_with_text(88, "Toggling Stop Condition"))
-        self.buttonToggleLED.place(x=130, y=355)
+        self.buttonStop = ctk.CTkSwitch(self,text="Toggle Stop",width=110, command=lambda: self.send_command_with_text(88, "Toggling Stop Condition"))
+        self.buttonStop.place(x=130, y=355)
 
-        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle Print Encoders / Line Sensors", width=100, command=lambda: self.send_command_with_text(22, f"Toggling Encoder / Line Sensor Serial Print"))
-        self.buttonToggleLED.place(x=20, y=390)
+        self.buttonPrintEncoders = ctk.CTkSwitch(self,text="Print Encoders / Line Sensors", width=100, command=lambda: self.send_command_with_text(22, f"Toggling Encoder / Line Sensor Serial Print"))
+        self.buttonPrintEncoders.place(x=20, y=390)
+        self.buttonPrintEncoders.select()
 
-        self.buttonToggleLED = ctk.CTkButton(self,text="Toggle Serial Print", width=60, command=lambda: self.send_command_with_text(23, f"Toggling Serial Print"))
-        self.buttonToggleLED.place(x=20, y=425)
+        self.buttonTogglePrint = ctk.CTkSwitch(self,text="Toggle Serial Print", width=60, command=lambda: self.send_command_with_text(23, f"Toggling Serial Print"))
+        self.buttonTogglePrint.place(x=20, y=415)
+        self.buttonTogglePrint.select()
     
         self.buttonRotate = ctk.CTkButton(self, text="Rotate 180 Degrees", command=lambda: self.send_command_with_text(77, "Rotating 180 degrees"))
         self.buttonRotate.place(x=310, y=355)
 
-        self.buttonEnable = ctk.CTkButton(self, text="Enable", width=70, command=lambda: self.send_command_with_text(95, "Toggle Motors On/Off"))
-        self.buttonEnable.place(x=250, y=390)
+        self.buttonEnable = ctk.CTkSwitch(self, text="Enable", width=70, command=lambda: self.send_command_with_text(95, "Toggle Motors On/Off"))
+        self.buttonEnable.place(x=20, y=440)
+        self.buttonEnable.select()
 
-        self.buttonUseSensors = ctk.CTkButton(self, text="Use Sensors", width=70, command=lambda: self.send_command_with_text(35, "Toggle Sensor Usage"))
-        self.buttonUseSensors.place(x=328, y=390)
+        self.buttonUseSensors = ctk.CTkSwitch(self, text="Use Sensors", width=70, command=lambda: self.send_command_with_text(35, "Toggle Sensor Usage"))
+        self.buttonUseSensors.place(x=20, y=465)
+        self.buttonUseSensors.select()
 
         self.buttonConnect = ctk.CTkButton(self,text="Connect", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()), width=80)
         self.buttonConnect.place(x=338.0, y=16)

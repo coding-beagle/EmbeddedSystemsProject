@@ -31,28 +31,35 @@ class ReadLine:
             else:
                 self.buf.extend(data)
 
+num_graphs = 2
+graph_shape = (1,2)
+
 # Main script
-port = 'COM21'  # Serial port to use
+port = 'COM9'  # Serial port to use
 ser = serial.Serial(port, 9600)
 rl = ReadLine(ser)
 
 max_length = 200  # Maximum number of points to plot
 xpoints = deque(maxlen=max_length)
-ypoints = [deque(maxlen=max_length) for _ in range(4)]  # Use deque for efficient appends
+ypoints = [deque(maxlen=max_length) for _ in range(num_graphs)]  # Use deque for efficient appends
 
 plt.ion()  # Enable interactive mode
-fig, axs = plt.subplots(2, 2)  # Create 4 subplots in a 2x2 grid
+fig, axs = plt.subplots(graph_shape[0], graph_shape[1])  # Create 4 subplots in a 2x2 grid
 axs = axs.flatten()  # Flatten the 2x2 grid into a 1D array for easy iteration
 
-lines = [axs[i].plot(xpoints, ypoints[i], label=f'Sensor {i+1}')[0] for i in range(4)]  # Initialize 4 lines for plotting
+lines = [axs[i].plot(xpoints, ypoints[i], label=f'Sensor {i+1}')[0] for i in range(num_graphs)]  # Initialize 4 lines for plotting
 
 for i, ax in enumerate(axs):
     ax.set_xlabel('Time')
     ax.set_ylabel(f'Sensor {i+1} Readings')
+    ax.set_ylim([0, 1])
 
-time_step = 0.05  # Time step between data points
+time_step = 0.01  # Time step between data points
 line_count = 0
 last_update_time = time.time()
+last_key_time = time.time()
+button_debounce = 0.3
+limits = [0, 1]
 
 try:
     while True:
@@ -61,7 +68,7 @@ try:
             if response:
                 decoded_response = response.decode("utf-8").strip()
                 label, value_str = decoded_response.split('=')
-                index = int(label.strip()[-1]) - 1  # Assuming labels are 'S1', 'S2', ..., convert to 0-based index
+                index = int(label.strip()[-1]) - 1  # labels are 'S1', 'S2', ..., convert to 0-based index
                 value = float(value_str)
 
                 ypoints[index].append(value)
@@ -73,9 +80,9 @@ try:
         except:
             pass
 
-        # Update the plots only every 100 milliseconds
-        if time.time() - last_update_time >= 0.1:
-            for i in range(4):
+        # Update the plots only every 0.05 milliseconds
+        if time.time() - last_update_time >= 0.05:
+            for i in range(num_graphs):
                 lines[i].set_xdata(np.arange(len(ypoints[i])) * time_step)
                 lines[i].set_ydata(list(ypoints[i]))
 
@@ -86,7 +93,7 @@ try:
             fig.canvas.flush_events()
             last_update_time = time.time()
 
-        if kb.is_pressed("a"):  # Reset data
+        if kb.is_pressed("a") and time.time() - last_key_time >= button_debounce:  # Reset data
             xpoints.clear()
             for ydeque in ypoints:
                 ydeque.clear()
@@ -100,7 +107,34 @@ try:
                 lines[i] = ax.plot(xpoints, ypoints[i], label=f'Line Sensor {i+1}')[0]
                 # Optionally, if you had titles or legends, set them up again here
                 ax.relim()
+                ax.set_ylim(limits)
                 ax.autoscale_view()
+            last_key_time = time.time()
+        if kb.is_pressed("up") and time.time() - last_key_time >= button_debounce:
+            limits[1] += 1
+            for i, ax in enumerate(axs):
+                ax.set_ylim(limits)
+            last_key_time = time.time()
+        if kb.is_pressed("down") and time.time() - last_key_time >= button_debounce:
+            if(limits[1] > 1): limits[1] -= 1
+            for i, ax in enumerate(axs):
+                ax.set_ylim(limits)
+            last_key_time = time.time()
+        if kb.is_pressed("b") and time.time() - last_key_time >= button_debounce:
+            limits = [0, 1]
+            for i, ax in enumerate(axs):
+                ax.set_ylim(limits)
+            last_key_time = time.time()
+        if kb.is_pressed("left") and time.time() - last_key_time >= button_debounce:
+            if(max_length > 10): max_length -= 10  # Maximum number of points to plot
+            xpoints = deque(maxlen=max_length)
+            ypoints = [deque(maxlen=max_length) for _ in range(num_graphs)]  # Use deque for efficient appends
+
+        if kb.is_pressed("right") and time.time() - last_key_time >= button_debounce:
+            if(max_length < 200): max_length += 10  # Maximum number of points to plot
+            xpoints = deque(maxlen=max_length)
+            ypoints = [deque(maxlen=max_length) for _ in range(num_graphs)]  # Use deque for efficient appends
+
 
 except KeyboardInterrupt:
     print("Program terminated by user")
