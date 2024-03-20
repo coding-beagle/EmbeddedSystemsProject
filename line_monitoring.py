@@ -31,8 +31,8 @@ class ReadLine:
             else:
                 self.buf.extend(data)
 
-num_graphs = 2
-graph_shape = (1,2)
+num_graphs = 4
+graph_shape = (2,2)
 
 # Main script
 port = 'COM9'  # Serial port to use
@@ -47,7 +47,7 @@ plt.ion()  # Enable interactive mode
 fig, axs = plt.subplots(graph_shape[0], graph_shape[1])  # Create 4 subplots in a 2x2 grid
 axs = axs.flatten()  # Flatten the 2x2 grid into a 1D array for easy iteration
 
-lines = [axs[i].plot(xpoints, ypoints[i], label=f'Sensor {i+1}')[0] for i in range(num_graphs)]  # Initialize 4 lines for plotting
+lines = [axs[i].plot(xpoints, ypoints[i], label=f'Sensor {i+1}')[0] for i in range(num_graphs)]  # Initialize n lines for plotting
 
 for i, ax in enumerate(axs):
     ax.set_xlabel('Time')
@@ -134,6 +134,18 @@ try:
             if(max_length < 200): max_length += 10  # Maximum number of points to plot
             xpoints = deque(maxlen=max_length)
             ypoints = [deque(maxlen=max_length) for _ in range(num_graphs)]  # Use deque for efficient appends
+        
+        if kb.is_pressed("p") and time.time() - last_key_time >= button_debounce:
+            axs[0].set_ylabel("Motor 1 RPS")
+            axs[1].set_ylabel("Motor 2 RPS")
+            axs[2].set_ylabel("Motor 1 Set Point")
+            axs[3].set_ylabel("Motor 2 Set Point")
+        
+        if kb.is_pressed("d") and time.time() - last_key_time >= button_debounce:
+            axs[0].set_ylabel("Line Sensor 1")
+            axs[1].set_ylabel("Line Sensor 2")
+            axs[2].set_ylabel("Line Sensor 3")
+            axs[3].set_ylabel("Line Sensor 4")
 
 
 except KeyboardInterrupt:

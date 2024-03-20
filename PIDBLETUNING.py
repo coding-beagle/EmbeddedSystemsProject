@@ -34,14 +34,24 @@ class BLEDeviceManager:
         try:
             message = data.decode('utf-8')
         except UnicodeDecodeError:
-            message = "Bad decoding!"
+            # message = "Bad decoding!"
+            message = ""
+            pass
         ic(message)
 
         if message == "RCVD\x00\x00":
             self.wait_event.set()
             ic("Check Passed!")
+        
+        if message == "SINT\x00\x00":
+            self.wait_event.set()
+            ic("Check Passed!")
+        
+        if message == "SFLT\x00\x00":
+            self.wait_event.set()
+            ic("Check Passed!")
 
-        if self.response_callback and message != "RCVD\x00\x00":
+        if self.response_callback and not(message == "RCVD\x00\x00" or message == "SINT\x00\x00" or message == "SFLT\x00\x00" or message == ""):
             self.response_callback(message)
 
     async def wait_for_response_or_timeout(self, timeout):
@@ -113,7 +123,7 @@ class BLEDeviceManager:
         else:
             print("Device is not connected.")
     
-    async def send_command_with_argument(self, command, arg=None, delay_between=0.1, wait_for_rcvd=False, timeout=0.3):
+    async def send_command_with_argument(self, command, arg=None, delay_between=0.3):
         if not self.connected:
             print("Device not connected.")
             return
@@ -123,10 +133,11 @@ class BLEDeviceManager:
         print(f"Command {command} sent.")
 
         num_sent = 0
+        await self.wait_for_response_or_timeout(delay_between)
 
         if arg is not None:
             if isinstance(arg, int):
-                await asyncio.sleep(delay_between)
+                # await asyncio.sleep(delay_between)
                 arg_bytes = arg.to_bytes(1, byteorder='little')
                 await self.client.write_gatt_char(CHARACTERISTIC_UUID, arg_bytes)
                 
@@ -138,8 +149,7 @@ class BLEDeviceManager:
                     arg_bytes = i.to_bytes(1, byteorder='little')
                     await self.client.write_gatt_char(CHARACTERISTIC_UUID, arg_bytes)
                     # print(f"Sending {int(arg_bytes)}")
-                    if wait_for_rcvd:
-                        await self.wait_for_response_or_timeout(timeout)
+                    await self.wait_for_response_or_timeout(delay_between)
                     num_sent += 1
                 print(f"Argument {arg} sent.")
 
@@ -154,11 +164,14 @@ def start_asyncio_loop():
     loop.run_forever()
 
 def run_coroutine_threadsafe(coroutine):
+    global running_command
+    running_command = True
     global loop
     if loop is None:
         print("Event loop is not running.")
         return
     asyncio.run_coroutine_threadsafe(coroutine, loop)
+    running_command = False
 
 # gui functionality
 
@@ -195,9 +208,11 @@ class Root(ctk.CTk):
     async def send_motor_speeds_async(self, val_1, val_2):
         # await self.ble_manager.send_command(95)
         await self.ble_manager.send_command(34, 0.1)
-        await self.ble_manager.send_command_with_argument(40, val_1, 0.3, True)
-        await asyncio.sleep(0.05)
-        await self.ble_manager.send_command_with_argument(50, val_2, 0.3, True)
+        await self.ble_manager.send_command_with_argument(55, 0, 0.3) # change value being set to speed_1
+        await self.ble_manager.send_command_with_argument(50, val_1, 0.3)   # then change value to what we want
+        # await asyncio.sleep(0.05)
+        await self.ble_manager.send_command_with_argument(55, 1, 0.3)
+        await self.ble_manager.send_command_with_argument(50, val_2, 0.3)
         await self.ble_manager.send_command(33, 0.1)
         # await self.ble_manager.send_command(95)
 
@@ -221,14 +236,17 @@ class Root(ctk.CTk):
         self.send_motor_speeds()
     
     async def send_pids_async(self, val_1, val_2, val_3, command_tuple):
-        await self.ble_manager.send_command(34, 0.1) # disable motors
+        await self.ble_manager.send_command(34, 0.05) # disable motors
         if(val_1 is not None):
-            await self.ble_manager.send_command_with_argument(command_tuple[0], val_1, 0.15, True)
+            await self.ble_manager.send_command_with_argument(55, command_tuple[0], 0.05)
+            await self.ble_manager.send_command_with_argument(50, val_1, 0.05)
         if(val_2 is not None):
-            await self.ble_manager.send_command_with_argument(command_tuple[1], val_2, 0.15, True)
+            await self.ble_manager.send_command_with_argument(55, command_tuple[1], 0.05)
+            await self.ble_manager.send_command_with_argument(50, val_2, 0.05)
         if(val_3 is not None):
-            await self.ble_manager.send_command_with_argument(command_tuple[2], val_3, 0.15, True)
-        await self.ble_manager.send_command(33, 0.1) # reenable
+            await self.ble_manager.send_command_with_argument(55, command_tuple[2], 0.05)
+            await self.ble_manager.send_command_with_argument(50, val_3, 0.05)
+        await self.ble_manager.send_command(33, 0.05) # reenable
 
     def send_pids(self, entry_1, entry_2, entry_3, pid_name, command_tuple):
         # run_coroutine_threadsafe(self.ble_manager.send_command(34, 0.1))
@@ -251,12 +269,14 @@ class Root(ctk.CTk):
         run_coroutine_threadsafe(self.send_pids_async(input_1, input_2, input_3, command_tuple))
 
     def disable_motors_and_update_gui(self, arg):
-        self.send_command_with_text(34, "Disabling Motors")
-        self.buttonEnable.deselect()
+        if(not(running_command)):
+            self.send_command_with_text(36, "Disabling Motors")
+            self.buttonEnable.deselect()
     
     def enable_motors_and_update_gui(self, arg):
-        self.send_command_with_text(33, "Enabling Motors")
-        self.buttonEnable.select()
+        if(not(running_command)):
+            self.send_command_with_text(37, "Enabling Motors")
+            self.buttonEnable.select()
 
     def toggle_serial(self, arg):
         self.send_command_with_text(23, "Toggling Serial Print")
@@ -314,7 +334,7 @@ class Root(ctk.CTk):
         self.entryD1 = ctk.CTkEntry(self, width=50)
         self.entryD1.place(x=370, y=110)
 
-        self.buttonSendM1PIDs = ctk.CTkButton(self, text="Send", width=40, command= lambda e1= self.entryP1, e2= self.entryI1, e3=self.entryD1: self.send_pids(e1, e2, e3, "Motor 1", (44, 45, 46)) )
+        self.buttonSendM1PIDs = ctk.CTkButton(self, text="Send", width=40, command= lambda e1= self.entryP1, e2= self.entryI1, e3=self.entryD1: self.send_pids(e1, e2, e3, "Motor 1", (2, 3, 4)) )
         self.buttonSendM1PIDs.place(x=430, y=110)
 
         ## PID 1 ADJUSTERS END
@@ -333,7 +353,7 @@ class Root(ctk.CTk):
         self.entryD2 = ctk.CTkEntry(self, width=50)
         self.entryD2.place(x=370, y=165)
 
-        self.buttonSendM2PIDs = ctk.CTkButton(self, text="Send", width=40, command= lambda e1= self.entryP2, e2= self.entryI2, e3=self.entryD2: self.send_pids(e1, e2, e3, "Motor 2", (54, 55, 56)))
+        self.buttonSendM2PIDs = ctk.CTkButton(self, text="Send", width=40, command= lambda e1= self.entryP2, e2= self.entryI2, e3=self.entryD2: self.send_pids(e1, e2, e3, "Motor 2", (5, 6, 7)))
         self.buttonSendM2PIDs.place(x=430, y=165)
 
         ## PID 2 ADJUSTERS END
@@ -352,7 +372,7 @@ class Root(ctk.CTk):
         self.entryD3 = ctk.CTkEntry(self, width=50)
         self.entryD3.place(x=370, y=220)
 
-        self.buttonSendNAVIPIDs = ctk.CTkButton(self, text="Send", width=40, command= lambda e1= self.entryP3, e2= self.entryI3, e3=self.entryD3: self.send_pids(e1, e2, e3, "Navig", (64, 65, 66)))
+        self.buttonSendNAVIPIDs = ctk.CTkButton(self, text="Send", width=40, command= lambda e1= self.entryP3, e2= self.entryI3, e3=self.entryD3: self.send_pids(e1, e2, e3, "Navig", (8, 9, 10)))
         self.buttonSendNAVIPIDs.place(x=430, y=220)
 
         ## PID 3 ADJUSTERS END
