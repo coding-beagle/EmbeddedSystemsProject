@@ -27,6 +27,7 @@ class BLEDeviceManager:
         self.response_callback = response_callback
         self.consoleReference = None
         self.wait_event = asyncio.Event()  # Added event for synchronization
+        self.sending_command = False
 
     async def notification_handler(self, sender, data):
         # convert data to a string or process it as needed
@@ -106,8 +107,10 @@ class BLEDeviceManager:
 
     async def send_command(self, command_value, delay_after=0.0):
         if self.connected:
+            self.sending_command = True
             command_bytes = command_value.to_bytes(1, byteorder='little')
             await self.client.write_gatt_char(CHARACTERISTIC_UUID, command_bytes)
+            self.sending_command = False
             print(f"Command {command_value} sent.")
             if delay_after > 0:
                 await asyncio.sleep(delay_after)  # wait for a specified delay after sending the command
@@ -190,9 +193,10 @@ class Root(ctk.CTk):
         self.TBcommandLog.see(tk.END)
     
     def send_command_with_text(self, number, string):
-        self.TBcommandLog.insert(tk.END ,f"\n{string}")
-        self.TBcommandLog.see(tk.END)
-        run_coroutine_threadsafe(self.ble_manager.send_command(number))
+        if(not(self.ble_manager.sending_command)):
+            self.TBcommandLog.insert(tk.END ,f"\n{string}")
+            self.TBcommandLog.see(tk.END)
+            run_coroutine_threadsafe(self.ble_manager.send_command(number))
 
     def send_entry(self, e=None):
         value_to_send = self.commandEntry.get()
@@ -433,6 +437,10 @@ class Root(ctk.CTk):
         self.buttonUseSensors.place(x=20, y=465)
         self.buttonUseSensors.select()
 
+        self.switchToggleInterp = ctk.CTkSwitch(self, text="Use Interpolation", width=70, command = lambda: self.send_command_with_text(92, "Toggling Interpolation"))
+        self.switchToggleInterp.place(x=250, y=390)
+        self.switchToggleInterp.select()
+
         self.buttonConnect = ctk.CTkButton(self,text="Connect", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()), width=80)
         self.buttonConnect.place(x=338.0, y=16)
 
@@ -442,6 +450,11 @@ class Root(ctk.CTk):
         self.bind_all("<space>", lambda e: self.send_command_with_text(77, "Rotating 180 degrees"))
         self.bind_all("<d>", self.disable_motors_and_update_gui)
         self.bind_all("<e>", self.enable_motors_and_update_gui)
+
+        self.bind_all("<Up>", lambda e: self.send_command_with_text(62, "FW"))
+        self.bind_all("<Down>", lambda e: self.send_command_with_text(61, "BW"))
+        self.bind_all("<Left>", lambda e: self.send_command_with_text(63, "L"))
+        self.bind_all("<Right>", lambda e: self.send_command_with_text(64, "R"))
 
         self.bind_all("<s>", self.toggle_serial)
 
