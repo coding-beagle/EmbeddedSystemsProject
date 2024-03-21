@@ -61,6 +61,9 @@ last_key_time = time.time()
 button_debounce = 0.3
 limits = [0, 1]
 
+overlay = False
+overlay_lines = [axs[i].plot([], [], label=f'Sensor {i+3} Overlay')[0] for i in range(2)]
+
 try:
     while True:
         response = rl.readline()
@@ -85,6 +88,13 @@ try:
             for i in range(num_graphs):
                 lines[i].set_xdata(np.arange(len(ypoints[i])) * time_step)
                 lines[i].set_ydata(list(ypoints[i]))
+
+                if overlay and i < 2:  # If overlay is enabled, update overlay lines for the first two plots
+                    overlay_lines[i].set_xdata(np.arange(len(ypoints[i + 2])) * time_step)
+                    overlay_lines[i].set_ydata(list(ypoints[i + 2]))
+                    overlay_lines[i].set_visible(True)
+                elif i < 2:  # Ensure overlay lines are not visible if overlay is disabled
+                    overlay_lines[i].set_visible(False)
 
                 axs[i].relim()
                 axs[i].autoscale_view()
@@ -146,6 +156,10 @@ try:
             axs[1].set_ylabel("Line Sensor 2")
             axs[2].set_ylabel("Line Sensor 3")
             axs[3].set_ylabel("Line Sensor 4")
+        
+        if kb.is_pressed("i") and time.time() - last_key_time >= button_debounce:
+            overlay = not overlay  # Toggle overlay state
+            last_key_time = time.time()
 
 
 except KeyboardInterrupt:

@@ -240,17 +240,18 @@ class Root(ctk.CTk):
         self.send_motor_speeds()
     
     async def send_pids_async(self, val_1, val_2, val_3, command_tuple):
-        await self.ble_manager.send_command(34, 0.05) # disable motors
+        ic(val_1, val_2, val_3, command_tuple)
+        await self.ble_manager.send_command(34, 0.2) # disable motors
         if(val_1 is not None):
-            await self.ble_manager.send_command_with_argument(55, command_tuple[0], 0.05)
-            await self.ble_manager.send_command_with_argument(50, val_1, 0.05)
+            await self.ble_manager.send_command_with_argument(55, command_tuple[0], 0.3)
+            await self.ble_manager.send_command_with_argument(50, val_1, 0.3)
         if(val_2 is not None):
-            await self.ble_manager.send_command_with_argument(55, command_tuple[1], 0.05)
-            await self.ble_manager.send_command_with_argument(50, val_2, 0.05)
+            await self.ble_manager.send_command_with_argument(55, command_tuple[1], 0.3)
+            await self.ble_manager.send_command_with_argument(50, val_2, 0.3)
         if(val_3 is not None):
-            await self.ble_manager.send_command_with_argument(55, command_tuple[2], 0.05)
-            await self.ble_manager.send_command_with_argument(50, val_3, 0.05)
-        await self.ble_manager.send_command(33, 0.05) # reenable
+            await self.ble_manager.send_command_with_argument(55, command_tuple[2], 0.3)
+            await self.ble_manager.send_command_with_argument(50, val_3, 0.3)
+        await self.ble_manager.send_command(33, 0.2) # reenable
 
     def send_pids(self, entry_1, entry_2, entry_3, pid_name, command_tuple):
         # run_coroutine_threadsafe(self.ble_manager.send_command(34, 0.1))
