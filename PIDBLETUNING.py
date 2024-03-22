@@ -273,6 +273,14 @@ class Root(ctk.CTk):
 
         run_coroutine_threadsafe(self.send_pids_async(input_1, input_2, input_3, command_tuple))
 
+    async def send_speed_quick_async(self, speed):
+        await self.ble_manager.send_command_with_argument(59, speed, 0.15)
+
+    def send_speed_quick(self, speed):
+        self.TBcommandLog.insert(tk.END, f"\nSending Speeds {speed/10}")
+        self.TBcommandLog.see(tk.END)
+        run_coroutine_threadsafe(self.send_speed_quick_async(speed))
+
     def disable_motors_and_update_gui(self, arg):
         if(not(running_command)):
             self.send_command_with_text(36, "Disabling Motors")
@@ -456,6 +464,14 @@ class Root(ctk.CTk):
         self.bind_all("<Down>", lambda e: self.send_command_with_text(61, "BW"))
         self.bind_all("<Left>", lambda e: self.send_command_with_text(63, "L"))
         self.bind_all("<Right>", lambda e: self.send_command_with_text(64, "R"))
+
+        self.bind_all("<z>", lambda e: self.send_speed_quick(0))
+        self.bind_all("<x>", lambda e: self.send_speed_quick(10))
+        self.bind_all("<c>", lambda e: self.send_speed_quick(20))
+        self.bind_all("<v>", lambda e: self.send_speed_quick(30))
+        self.bind_all("<b>", lambda e: self.send_speed_quick(40))
+        self.bind_all("<n>", lambda e: self.send_speed_quick(60))
+        
 
         self.bind_all("<s>", self.toggle_serial)
 
