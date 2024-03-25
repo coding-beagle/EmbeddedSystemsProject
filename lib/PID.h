@@ -20,6 +20,10 @@ public:
     void setI(double value);
     void setD(double value);
 
+    double getP();
+    double getI();
+    double getD();
+
     void reset();
 
     double calculate(double current_val, double desired_val);

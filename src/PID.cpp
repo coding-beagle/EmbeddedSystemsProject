@@ -20,6 +20,18 @@ void PIDController::setD(double value){
     deriv_const = value;
 }
 
+double PIDController::getP(){
+    return prop_const;
+}
+
+double PIDController::getI(){
+    return int_const;
+}
+
+double PIDController::getD(){
+    return deriv_const;
+}
+
 void PIDController::reset(){
     integral_sum = 0.0;
     previous_error = 0.0;
@@ -32,7 +44,7 @@ double PIDController::calculate(double current_val, double desired_val) {
 
         // Integral term
         
-        integral_sum += error*dt;
+        integral_sum = integral_sum + error*dt;
         double integral_error = integral_sum * int_const; // Initialize to zero
 
         // Derivative term

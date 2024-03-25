@@ -8,7 +8,7 @@ void Encoder::increment(){
 void Encoder::calculateRPS(){
     RPS = (pulses / (float)pulses_per_rev) * 1/(calc_period);
     previous_rps[rps_index] = RPS;
-    rps_index++; if(rps_index >= 5){rps_index = 0;}
+    rps_index++; if(rps_index >= ROLLING_AVERAGE_DATA_POINTS){rps_index = 0;}
     clearPulses();
 }
 
@@ -32,17 +32,17 @@ void Encoder::clearPulses(){
 }
 
 void Encoder::clearRPS(){
-    for(int i = 0; i<5; i++){previous_rps[i] = 0.0;}
+    for(int i = 0; i<ROLLING_AVERAGE_DATA_POINTS; i++){previous_rps[i] = 0.0;}
 }
 
 float Encoder::getRPS(){
     float sum = 0.0;
-    for(int i = 0; i < 5; i++){
+    for(int i = 0; i < ROLLING_AVERAGE_DATA_POINTS; i++){
         sum += previous_rps[i];
     }
 
     // divide by 10.0 because we have 4x
-    return sum / 10.0;
+    return sum / ((float)ROLLING_AVERAGE_DATA_POINTS * 2);
 }
 
 float Encoder::getDistanceM(){

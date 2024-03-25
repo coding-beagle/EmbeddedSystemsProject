@@ -6,7 +6,7 @@
 #define NUMBER_OF_BAUDS 9
 #define COMMAND_LENGTH 2
 #define OUTPUT_BUFFER_SIZE 50
-#define NUMBER_OF_COMMANDS 22
+#define NUMBER_OF_COMMANDS 25
 
 class HM10{
     private:

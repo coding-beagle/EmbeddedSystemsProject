@@ -23,10 +23,14 @@ HM10::HM10(PinName rx, PinName tx, int baud) : bleModule(rx, tx){
 float HM10::incoming_to_float(){
     int index = 0;
     uint32_t output = 0;
+    char data[5] = "SFLT";  // "Send FLoaT", tells receiver to initiate float transfer
+    transmitData(data, 5);
     while(index < 4){
         uint32_t c = bleModule.getc() << (index * 8);
         output |= c;
         index++;
+        char data[5] = "RCVD";
+        transmitData(data, 5);
     }
 
     union {
@@ -136,6 +140,8 @@ void HM10::doBLE(){
             
             if(c == callbacksArray[i].signal){
                 if(callbacksArray[i].takesInt){
+                    char data[5] = "SINT"; // Tell Receiver to send int
+                    transmitData(data, 5);
                     int arg = bleModule.getc();
                     callbacksArray[i].callback_int(arg);
                     char toTransmit[30];

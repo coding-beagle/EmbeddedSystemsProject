@@ -2,13 +2,15 @@
 #define ENCODERS_H
 #include "mbed.h"
 
+#define ROLLING_AVERAGE_DATA_POINTS 10
+
 class Encoder{
     private:
         InterruptIn channelA, channelB;
         int pulses, revolutions, pulses_per_rev, rps_index;
         float RPS, wheel_diameter, calc_period;
         Ticker t;
-        float previous_rps[5];
+        float previous_rps[30];
 
         void increment();
 
