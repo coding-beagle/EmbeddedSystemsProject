@@ -35,7 +35,7 @@ num_graphs = 4
 graph_shape = (2,2)
 
 # Main script
-port = 'COM9'  # Serial port to use
+port = 'COM21'  # Serial port to use
 ser = serial.Serial(port, 9600)
 rl = ReadLine(ser)
 
