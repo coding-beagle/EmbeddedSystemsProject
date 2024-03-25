@@ -17,6 +17,6 @@ with open(f'results/{file_name}.csv') as file:
 
 print(data["X_mid"])
 print(data["Y_mid"])
-plt.scatter(np.array(data["X_mid"]), np.array(data["Y_mid"]))
+plt.scatter(np.array(data["X_mid"]), np.array(data["Y_mid"]), marker='x')
 plt.waitforbuttonpress()
     
