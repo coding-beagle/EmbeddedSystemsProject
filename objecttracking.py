@@ -5,7 +5,7 @@ from skimage import measure
 import imutils
 import csv
 
-vid = cv2.VideoCapture(0 ,cv2.CAP_DSHOW)
+vid = cv2.VideoCapture(1 ,cv2.CAP_DSHOW)
 
 min_area = 300
 firstFrame = None
@@ -32,11 +32,11 @@ while(1):
     # compute the absolute difference between the current frame and
 	# first frame
     frameDelta = cv2.absdiff(firstFrame, gray)
-    thresh = cv2.threshold(frameDelta, 30, 255, cv2.THRESH_BINARY)[1]
+    thresh = cv2.threshold(frameDelta, 50, 255, cv2.THRESH_BINARY)[1]
 	# dilate the thresholded image to fill in holes, then find contours
 	# on thresholded image
-    thresh = cv2.erode(thresh, None, iterations=1)
-    thresh = cv2.dilate(thresh, None, iterations=2)
+    # thresh = cv2.erode(thresh, None, iterations=2)
+    thresh = cv2.dilate(thresh, None, iterations=3)
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
 	# loop over the contours
@@ -62,8 +62,10 @@ cv2.destroyAllWindows()
 
 file_name = input("File Name: ")
 
-with open(f"results/{file_name}.csv", mode='w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerows(output_data)
+if file_name != "":
 
-print(f"Data Printed Succesfully in results/{file_name}.csv")
+    with open(f"results/{file_name}.csv", mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(output_data)
+
+    print(f"Data Printed Succesfully in results/{file_name}.csv")

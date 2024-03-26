@@ -220,6 +220,27 @@ class Root(ctk.CTk):
         await self.ble_manager.send_command(33, 0.1)
         # await self.ble_manager.send_command(95)
 
+    async def send_stop_conds_async(self, val_1, val_2):
+        # await self.ble_manager.send_command(95)
+        await self.ble_manager.send_command(34, 0.1)
+        await self.ble_manager.send_command_with_argument(55, 14, 0.3) # change value being set to speed_1
+        await self.ble_manager.send_command_with_argument(50, val_1, 0.3)   # then change value to what we want
+        # await asyncio.sleep(0.05)
+        await self.ble_manager.send_command_with_argument(55, 15, 0.3)
+        await self.ble_manager.send_command_with_argument(50, val_2, 0.3)
+        await self.ble_manager.send_command(33, 0.1)
+        # await self.ble_manager.send_command(95)
+    
+    def send_stop_conds(self):
+        input_1 = self.float_to_bytes_le(float(self.entrySlowCond.get()))
+        input_2 = self.float_to_bytes_le(float(self.entrySlowSpeeds.get()))
+
+        self.TBcommandLog.insert(tk.END , f"\nSlowing Condition = {float(self.entrySlowCond.get())}")
+        self.TBcommandLog.insert(tk.END , f"\nSlowing Speeds = {float(self.entrySlowSpeeds.get())}")
+        self.TBcommandLog.see(tk.END)
+
+        run_coroutine_threadsafe(self.send_stop_conds_async(input_1, input_2))
+
     def send_motor_speeds(self):
         input_1 = self.float_to_bytes_le(float(self.entryMotor1Speed.get()))
         input_2 = self.float_to_bytes_le(float(self.entryMotor2Speed.get()))
@@ -405,7 +426,26 @@ class Root(ctk.CTk):
         self.buttonSendSpeeds.place(x=390, y=275)
 
         ## Desired Speed Adjusters End
+
+        ## Slow and Stop Condition Adjusters BEGIN
+
+        self.labelSlowConditions = ctk.CTkLabel(self, text="Slow Cond    Slow Speed")
+        self.labelSlowConditions.place(x=250, y=385)
+
+        self.entrySlowCond = ctk.CTkEntry(self, width=60)
+        self.entrySlowCond.place(x=250, y=410)
+
+        self.entrySlowSpeeds = ctk.CTkEntry(self, width=60)
+        self.entrySlowSpeeds.place(x=320, y=410)
+
+        self.buttonSendSlowStuff = ctk.CTkButton(self, width=50, text="Send", command=self.send_stop_conds)
+        self.buttonSendSlowStuff.place(x=390, y= 410)
     
+        ## Slow and Stop Condition Adjusters END
+
+        self.buttonCalibrate = ctk.CTkButton(self, text= "Calibrate Sensors", command=lambda : self.send_command_with_text(200, "Calibrating Sensors"))
+        self.buttonCalibrate.place(x=250, y=445)
+
         self.Label_2 = ctk.CTkLabel(self,text="PID Settings")
         self.Label_2.place(x=250.0, y=59)
 
@@ -447,7 +487,7 @@ class Root(ctk.CTk):
         self.buttonUseSensors.select()
 
         self.switchToggleInterp = ctk.CTkSwitch(self, text="Use Interpolation", width=70, command = lambda: self.send_command_with_text(92, "Toggling Interpolation"))
-        self.switchToggleInterp.place(x=250, y=390)
+        self.switchToggleInterp.place(x=250, y=470)
         self.switchToggleInterp.select()
 
         self.buttonConnect = ctk.CTkButton(self,text="Connect", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()), width=80)
