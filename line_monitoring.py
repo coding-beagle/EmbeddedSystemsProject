@@ -31,8 +31,8 @@ class ReadLine:
             else:
                 self.buf.extend(data)
 
-num_graphs = 4
-graph_shape = (2,2)
+num_graphs = 6
+graph_shape = (3,2)
 
 # Main script
 port = 'COM21'  # Serial port to use

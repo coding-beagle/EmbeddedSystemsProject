@@ -1,0 +1,15 @@
+speed 4.0 - P = 0.8, D = 0.006, SC = 1.7, SS = 0.5
+
+speed 1.0 - 1.25, 0.035
+
+speed 2.0 - 1.6, 0.001, sc 0.2, ss 0.5, reverse motor tt -2.5
+
+speed 4.0 - 1.9 0.001 sc 0.2, ss 0.5 reverse motor tt -3.0
+
+B2 weight 1.0
+----
+
+B2 weight 3.0
+Speed 4.0 - 2.6 0.002 0.3 0.1
+
+Speed 4.0 - 2.8 0.001 0.25 0.05
