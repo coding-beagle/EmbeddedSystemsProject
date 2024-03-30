@@ -496,9 +496,11 @@ class Root(ctk.CTk):
         self.buttonDisconnect = ctk.CTkButton(self,text="Disconnect", command=lambda: run_coroutine_threadsafe(self.ble_manager.disconnect()), width= 80)
         self.buttonDisconnect.place(x=250.0, y=16)
 
-        self.bind_all("<j>", lambda e: self.send_command_with_text(77, "Rotating 180 degrees"))
+        self.bind_all("<space>", lambda e: self.send_command_with_text(77, "Rotating 180 degrees"))
         self.bind_all("<d>", self.disable_motors_and_update_gui)
         self.bind_all("<e>", self.enable_motors_and_update_gui)
+
+        self.bind_all("<j>", lambda e: self.send_command_with_text(200, "Calibrating"))
 
         self.bind_all("<Up>", lambda e: self.send_command_with_text(62, "FW"))
         self.bind_all("<Down>", lambda e: self.send_command_with_text(61, "BW"))
