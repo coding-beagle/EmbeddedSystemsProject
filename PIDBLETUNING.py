@@ -220,26 +220,22 @@ class Root(ctk.CTk):
         await self.ble_manager.send_command(33, 0.1)
         # await self.ble_manager.send_command(95)
 
-    async def send_stop_conds_async(self, val_1, val_2):
+    async def send_stop_conds_async(self, val_1):
         # await self.ble_manager.send_command(95)
         await self.ble_manager.send_command(34, 0.1)
-        await self.ble_manager.send_command_with_argument(55, 14, 0.3) # change value being set to speed_1
-        await self.ble_manager.send_command_with_argument(50, val_1, 0.3)   # then change value to what we want
         # await asyncio.sleep(0.05)
         await self.ble_manager.send_command_with_argument(55, 15, 0.3)
-        await self.ble_manager.send_command_with_argument(50, val_2, 0.3)
+        await self.ble_manager.send_command_with_argument(50, val_1, 0.3)
         await self.ble_manager.send_command(33, 0.1)
         # await self.ble_manager.send_command(95)
     
     def send_stop_conds(self):
-        input_1 = self.float_to_bytes_le(float(self.entrySlowCond.get()))
-        input_2 = self.float_to_bytes_le(float(self.entrySlowSpeeds.get()))
+        input_1 = self.float_to_bytes_le(float(self.entrySlowSpeeds.get()))
 
-        self.TBcommandLog.insert(tk.END , f"\nSlowing Condition = {float(self.entrySlowCond.get())}")
         self.TBcommandLog.insert(tk.END , f"\nSlowing Speeds = {float(self.entrySlowSpeeds.get())}")
         self.TBcommandLog.see(tk.END)
 
-        run_coroutine_threadsafe(self.send_stop_conds_async(input_1, input_2))
+        run_coroutine_threadsafe(self.send_stop_conds_async(input_1))
 
     def send_motor_speeds(self):
         input_1 = self.float_to_bytes_le(float(self.entryMotor1Speed.get()))
@@ -331,7 +327,7 @@ class Root(ctk.CTk):
         ctk.set_appearance_mode("dark")   
         ctk.set_default_color_theme("dark-blue")
     
-        self.geometry("500x500")
+        self.geometry("500x530")
         self.title("WQY BLE")
 
         self.resizable(False, False)
@@ -429,17 +425,17 @@ class Root(ctk.CTk):
 
         ## Slow and Stop Condition Adjusters BEGIN
 
-        self.labelSlowConditions = ctk.CTkLabel(self, text="Slow Cond    Slow Speed")
+        self.labelSlowConditions = ctk.CTkLabel(self, text="Slow Speed")
         self.labelSlowConditions.place(x=250, y=385)
 
-        self.entrySlowCond = ctk.CTkEntry(self, width=60)
-        self.entrySlowCond.place(x=250, y=410)
+        # self.entrySlowCond = ctk.CTkEntry(self, width=60)
+        # self.entrySlowCond.place(x=250, y=410)
 
         self.entrySlowSpeeds = ctk.CTkEntry(self, width=60)
-        self.entrySlowSpeeds.place(x=320, y=410)
+        self.entrySlowSpeeds.place(x=250, y=410)
 
         self.buttonSendSlowStuff = ctk.CTkButton(self, width=50, text="Send", command=self.send_stop_conds)
-        self.buttonSendSlowStuff.place(x=390, y= 410)
+        self.buttonSendSlowStuff.place(x=320, y= 410)
     
         ## Slow and Stop Condition Adjusters END
 
@@ -448,6 +444,10 @@ class Root(ctk.CTk):
 
         self.Label_2 = ctk.CTkLabel(self,text="PID Settings")
         self.Label_2.place(x=250.0, y=59)
+
+        self.scrollable_settings_manager = ctk.CTkFrame(self, width=200, height=150)
+        self.scrollable_settings_manager.columnconfigure(0, weight=5)
+        self.scrollable_settings_manager.rowconfigure([0,6], weight=2)
 
         self.button_kill_speeds = ctk.CTkButton(self, text="Stop", width=50, command=lambda: self.set_speeds_and_send("0.0","0.0"))
         self.button_kill_speeds.place(x=250, y=320)
@@ -461,34 +461,36 @@ class Root(ctk.CTk):
         self.buttonForwards4 = ctk.CTkButton(self, text="6.0 FW", width=50, command=lambda: self.set_speeds_and_send("6.0", "-6.0"))
         self.buttonForwards4.place(x=250, y=355)
     
-        self.buttonToggleLED = ctk.CTkSwitch(self,text="Toggle LED",width=100, command=lambda: self.send_command_with_text(99, "Toggling LED"))
-        self.buttonToggleLED.place(x=20, y=355)
+        self.buttonToggleLED = ctk.CTkSwitch(self.scrollable_settings_manager,text="Toggle LED",width=100, command=lambda: self.send_command_with_text(99, "Toggling LED"))
+        self.buttonToggleLED.grid(row=0, column = 0,sticky="w")
 
-        self.buttonStop = ctk.CTkSwitch(self,text="Toggle Stop",width=110, command=lambda: self.send_command_with_text(88, "Toggling Stop Condition"))
-        self.buttonStop.place(x=130, y=355)
+        self.buttonStop = ctk.CTkSwitch(self.scrollable_settings_manager,text="Toggle Stop",width=110, command=lambda: self.send_command_with_text(88, "Toggling Stop Condition"))
+        self.buttonStop.grid(row=1, column = 0, sticky="w")
 
-        self.buttonPrintEncoders = ctk.CTkSwitch(self,text="Print Encoders / Line Sensors", width=100, command=lambda: self.send_command_with_text(22, f"Toggling Encoder / Line Sensor Serial Print"))
-        self.buttonPrintEncoders.place(x=20, y=390)
+        self.buttonPrintEncoders = ctk.CTkSwitch(self.scrollable_settings_manager,text="Print Encoders / Line Sensors", width=100, command=lambda: self.send_command_with_text(22, f"Toggling Encoder / Line Sensor Serial Print"))
+        self.buttonPrintEncoders.grid(row=2, column = 0, sticky="w")
         self.buttonPrintEncoders.select()
 
-        self.buttonTogglePrint = ctk.CTkSwitch(self,text="Toggle Serial Print", width=60, command=lambda: self.send_command_with_text(23, f"Toggling Serial Print"))
-        self.buttonTogglePrint.place(x=20, y=415)
-        self.buttonTogglePrint.select()
+        self.buttonTogglePrint = ctk.CTkSwitch(self.scrollable_settings_manager,text="Toggle Serial Print", width=60, command=lambda: self.send_command_with_text(23, f"Toggling Serial Print"))
+        self.buttonTogglePrint.grid(row=3, column = 0, sticky="w")
+        # self.buttonTogglePrint.select()
     
         self.buttonRotate = ctk.CTkButton(self, text="Rotate 180 Degrees", command=lambda: self.send_command_with_text(77, "Rotating 180 degrees"))
         self.buttonRotate.place(x=310, y=355)
 
-        self.buttonEnable = ctk.CTkSwitch(self, text="Enable", width=70, command=lambda: self.send_command_with_text(95, "Toggle Motors On/Off"))
-        self.buttonEnable.place(x=20, y=440)
+        self.buttonEnable = ctk.CTkSwitch(self.scrollable_settings_manager, text="Enable", width=70, command=lambda: self.send_command_with_text(95, "Toggle Motors On/Off"))
+        self.buttonEnable.grid(row=4, column = 0, sticky="w")
         self.buttonEnable.select()
 
-        self.buttonUseSensors = ctk.CTkSwitch(self, text="Use Sensors", width=70, command=lambda: self.send_command_with_text(35, "Toggle Sensor Usage"))
-        self.buttonUseSensors.place(x=20, y=465)
+        self.buttonUseSensors = ctk.CTkSwitch(self.scrollable_settings_manager, text="Use Sensors", width=70, command=lambda: self.send_command_with_text(35, "Toggle Sensor Usage"))
+        self.buttonUseSensors.grid(row=5, column = 0, sticky="w")
         self.buttonUseSensors.select()
 
-        self.switchToggleInterp = ctk.CTkSwitch(self, text="Use Interpolation", width=70, command = lambda: self.send_command_with_text(92, "Toggling Interpolation"))
-        self.switchToggleInterp.place(x=250, y=470)
+        self.switchToggleInterp = ctk.CTkSwitch(self.scrollable_settings_manager, text="Use Interpolation", width=70, command = lambda: self.send_command_with_text(92, "Toggling Interpolation"))
+        self.switchToggleInterp.grid(row=6, column = 0, sticky="w")
         self.switchToggleInterp.select()
+
+        self.scrollable_settings_manager.place(x=20, y=355)
 
         self.buttonConnect = ctk.CTkButton(self,text="Connect", command=lambda: run_coroutine_threadsafe(self.ble_manager.connect()), width=80)
         self.buttonConnect.place(x=338.0, y=16)
