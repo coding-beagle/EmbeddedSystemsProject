@@ -42,7 +42,7 @@ data = {"Frame": [],
         "Y_mid": [],
         "Displacement": []}
 
-PIXELS_PER_M = 1/300
+PIXELS_PER_M = 1/266
 
 with open(f'results/{file_name}.csv') as file:
     reader = csv.reader(file, delimiter=',')

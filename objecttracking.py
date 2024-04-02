@@ -6,6 +6,14 @@ import imutils
 import csv
 
 vid = cv2.VideoCapture(1 ,cv2.CAP_DSHOW)
+vid.set(3,640)
+vid.set(4,480)
+
+file_name = input("File Name: ")
+
+fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+out = cv2.VideoWriter(f'videos/{file_name}.mp4', fourcc, 20.0, (640,480))
+out2 = cv2.VideoWriter(f'videos/{file_name}_with_contours.mp4', fourcc, 20.0, (640,480))
 
 min_area = 300
 firstFrame = None
@@ -15,6 +23,8 @@ frame_count = 1
 
 while(1):
     _, frame = vid.read()
+
+    out.write(frame)
 	
     # frame = frame if args.get("video", None) is None else frame[1]
 	# if the frame could not be grabbed, then we have reached the end
@@ -51,6 +61,7 @@ while(1):
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
     
     cv2.imshow("Frame", frame)
+    out2.write(frame)
 
     frame_count += 1
 
@@ -59,8 +70,6 @@ while(1):
 
 vid.release()
 cv2.destroyAllWindows()
-
-file_name = input("File Name: ")
 
 if file_name != "":
 
