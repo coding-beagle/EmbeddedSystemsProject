@@ -4,15 +4,26 @@ from imutils import contours
 from skimage import measure
 import imutils
 import csv
+import os
 
-vid = cv2.VideoCapture(1 ,cv2.CAP_DSHOW)
+file_name = input("File Name: ")
+from_file = False
+
+if(f"{file_name}.mp4" in os.listdir("videos/")):
+    from_file = True
+    vid = cv2.VideoCapture(f"videos/{file_name}.mp4")
+else:
+    vid = cv2.VideoCapture(1 ,cv2.CAP_DSHOW)
 vid.set(3,640)
 vid.set(4,480)
 
-file_name = input("File Name: ")
+fps = 1/15 * 1000
 
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter(f'videos/{file_name}.mp4', fourcc, 15.0, (640,480))
+# exit("Halt Execution")
+
+if(not(from_file)):
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(f'videos/{file_name}.mp4', fourcc, 15.0, (640,480))
 # out_number_2 = cv2.VideoWriter(f'videos/{file_name}contoured.mp4', fourcc, 30.0, (640,480))
 
 min_area = 300
@@ -20,13 +31,15 @@ firstFrame = None
 
 output_data = []
 frame_count = 1
+cancel = False
 
 while(1):
     _, frame = vid.read()
 
-    out.write(frame)
+    if(not(from_file)):
+        out.write(frame)
 	
-    # frame = frame if args.get("video", None) is None else frame[1]
+    # frame = frame if from_file is False else frame[1]
 	# if the frame could not be grabbed, then we have reached the end
 	# of the video
     if frame is None:
@@ -35,10 +48,12 @@ while(1):
     frame = imutils.resize(frame, width=500)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     gray = cv2.GaussianBlur(gray, (21, 21), 0)
+
 	# if the first frame is None, initialize it
     if firstFrame is None:
         firstFrame = gray
         continue
+    
     # compute the absolute difference between the current frame and
 	# first frame
     frameDelta = cv2.absdiff(firstFrame, gray)
@@ -67,13 +82,33 @@ while(1):
 
     frame_count += 1
 
-    if(cv2.waitKey(1) & 0xFF == ord('x')):
-        break
+    if(from_file):
+        if(cv2.waitKey(int(fps)) & 0xFF == ord('x')):
+            break
+        # if(cv2.waitKey(fps) & 0xFF == ord('b')):
+        #     cancel = True
+        #     break
+    else:
+        if(cv2.waitKey(1) & 0xFF == ord('x')):
+            break
+        if(cv2.waitKey(1) & 0xFF == ord('b')):
+            cancel = True
+            break
+
+print("Analysis completed, press x to save results and b to cancel.")
+if(cv2.waitKey(0) & 0xFF == ord('b')):
+    cancel = True
+elif(cv2.waitKey(0) & 0xFF == ord('x')):
+    cancel = False
 
 vid.release()
-out.release()
+if(not(from_file)):
+    out.release()
 # out_number_2.release()
 cv2.destroyAllWindows()
+
+if(cancel):
+    exit("Saving Results Aborted.")
 
 if file_name != "":
 
