@@ -42,6 +42,29 @@ data = {"Frame": [],
         "Y_mid": [],
         "Displacement": []}
 
+
+def find_index_of_item_in_array(item, array):
+    for index, i in enumerate(array):
+        if(i == item): return index
+
+def remove_large_velocity_spikes(frame_array, velocity_array):
+    last_velocity = 0.0
+    output_velocity = velocity_array.copy()
+    output_frame = frame_array.copy()
+    indexes = []
+    for index, i in enumerate(velocity_array):
+        # print(velocity_array)
+        if i > 2.0:
+            indexes.append(index)
+        if(abs(i - last_velocity) > 0.03):
+            if(not(index in indexes)): indexes.append(index)
+        last_velocity = i
+    
+    for i in sorted(indexes, reverse=True):
+        output_frame.pop(i)
+        output_velocity.pop(i)
+    return (output_frame, output_velocity)
+
 PIXELS_PER_M = 1/266
 
 with open(f'results/{file_name}.csv') as file:
@@ -81,10 +104,12 @@ if(not(view_raw)):
             if(index == 0):
                 continue
             data["Displacement"].append(abs((data["X_mid"][index] - data["X_mid"][index - 1] + data["Y_mid"][index] - data["Y_mid"][index - 1])/(i - frames_converted_to_s[index-1]))*PIXELS_PER_M)    
-    z = np.polyfit(frames_converted_to_s[0:-1], data["Displacement"], 10)
-    p = np.poly1d(z)
-    axis[1].plot(frames_converted_to_s[0:-1], data["Displacement"])        
-    axis[1].plot(frames_converted_to_s[0:-1], p(frames_converted_to_s[0:-1]))        
+    
+    x_dat, y_dat = remove_large_velocity_spikes(frames_converted_to_s[0:-1], data["Displacement"])
+    axis[1].plot(x_dat, y_dat)
+    z = np.polyfit(x_dat, y_dat, 10)
+    p = np.poly1d(z)        
+    axis[1].plot(x_dat, p(x_dat))        
     plt.show()
         
 else:
