@@ -11,9 +11,9 @@ vid.set(4,480)
 
 file_name = input("File Name: ")
 
-fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-out = cv2.VideoWriter(f'videos/{file_name}.mp4', fourcc, 20.0, (640,480))
-out2 = cv2.VideoWriter(f'videos/{file_name}_with_contours.mp4', fourcc, 20.0, (640,480))
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+out = cv2.VideoWriter(f'videos/{file_name}.mp4', fourcc, 15.0, (640,480))
+# out_number_2 = cv2.VideoWriter(f'videos/{file_name}contoured.mp4', fourcc, 30.0, (640,480))
 
 min_area = 300
 firstFrame = None
@@ -50,6 +50,7 @@ while(1):
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
 	# loop over the contours
+    frame_with_contours = frame.copy()
     for c in cnts:
         # if the contour is too small, ignore it
         if cv2.contourArea(c) < min_area:
@@ -58,10 +59,11 @@ while(1):
         # and update the text
         (x, y, w, h) = cv2.boundingRect(c)
         output_data.append([frame_count, x+w/2, y+h/2])     # add data into an array
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.rectangle(frame_with_contours, (x, y), (x + w, y + h), (0, 255, 0), 2)
     
-    cv2.imshow("Frame", frame)
-    out2.write(frame)
+    
+    # out_number_2.write(frame_with_contours)
+    cv2.imshow("Frame", frame_with_contours)
 
     frame_count += 1
 
@@ -69,6 +71,8 @@ while(1):
         break
 
 vid.release()
+out.release()
+# out_number_2.release()
 cv2.destroyAllWindows()
 
 if file_name != "":

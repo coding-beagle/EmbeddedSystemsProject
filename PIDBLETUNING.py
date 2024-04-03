@@ -514,7 +514,8 @@ class Root(ctk.CTk):
         self.bind_all("<c>", lambda e: self.send_speed_quick(20))
         self.bind_all("<v>", lambda e: self.send_speed_quick(30))
         self.bind_all("<b>", lambda e: self.send_speed_quick(40))
-        self.bind_all("<n>", lambda e: self.send_speed_quick(60))
+        self.bind_all("<n>", lambda e: self.send_speed_quick(50))
+        self.bind_all("<m>", lambda e: self.send_speed_quick(60))
         
 
         self.bind_all("<s>", self.toggle_serial)

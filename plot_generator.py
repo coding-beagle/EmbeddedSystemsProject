@@ -54,9 +54,9 @@ def remove_large_velocity_spikes(frame_array, velocity_array):
     indexes = []
     for index, i in enumerate(velocity_array):
         # print(velocity_array)
-        if i > 2.0:
+        if i > 3.0:
             indexes.append(index)
-        if(abs(i - last_velocity) > 0.03):
+        if(abs(i - last_velocity) > 0.01):
             if(not(index in indexes)): indexes.append(index)
         last_velocity = i
     
