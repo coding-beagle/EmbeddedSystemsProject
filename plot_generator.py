@@ -54,9 +54,9 @@ def remove_large_velocity_spikes(frame_array, velocity_array):
     indexes = []
     for index, i in enumerate(velocity_array):
         # print(velocity_array)
-        if i > 3.0:
+        if i > 2.0:
             indexes.append(index)
-        if(abs(i - last_velocity) > 0.01):
+        if(abs(i - last_velocity) > 0.3):
             if(not(index in indexes)): indexes.append(index)
         last_velocity = i
     
@@ -65,7 +65,8 @@ def remove_large_velocity_spikes(frame_array, velocity_array):
         output_velocity.pop(i)
     return (output_frame, output_velocity)
 
-PIXELS_PER_M = 1/266
+PIXELS_PER_M = 2.2/640
+FPS = 1/15.0
 
 with open(f'results/{file_name}.csv') as file:
     reader = csv.reader(file, delimiter=',')
@@ -98,7 +99,7 @@ if(not(view_raw)):
     figure, axis = plt.subplots(2)
 
     axis[0].plot(np.array(data["X_mid"]), np.array(data["Y_mid"]), marker='x')
-    frames_converted_to_s = [i/30.0 for i in data["Frame"]]
+    frames_converted_to_s = [i*FPS for i in data["Frame"]]
     if(not(view_raw)):
         for index,i in enumerate(frames_converted_to_s):
             if(index == 0):
@@ -107,7 +108,7 @@ if(not(view_raw)):
     
     x_dat, y_dat = remove_large_velocity_spikes(frames_converted_to_s[0:-1], data["Displacement"])
     axis[1].plot(x_dat, y_dat)
-    z = np.polyfit(x_dat, y_dat, 10)
+    z = np.polyfit(x_dat, y_dat, 15)
     p = np.poly1d(z)        
     axis[1].plot(x_dat, p(x_dat))        
     plt.show()
