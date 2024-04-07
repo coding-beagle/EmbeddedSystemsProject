@@ -61,7 +61,7 @@ while(1):
 	# dilate the thresholded image to fill in holes, then find contours
 	# on thresholded image
     # thresh = cv2.erode(thresh, None, iterations=2)
-    thresh = cv2.dilate(thresh, None, iterations=3)
+    thresh = cv2.dilate(thresh, None, iterations=7)
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
 	# loop over the contours

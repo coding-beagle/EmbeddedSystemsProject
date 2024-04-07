@@ -1,0 +1,5 @@
+Best Run -> 0404 r6_70ss1.0
+Constant Speed -> 2.0_no_decel (shows no deceleration)
+
+Seeing Limitations of Object Tracking: 
+- 0304 r3 : SHOWS SYSTEMATIC ERROR FROM TRACKING RANDOM POINT + BUGGY

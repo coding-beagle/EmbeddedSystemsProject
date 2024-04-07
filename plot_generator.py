@@ -56,7 +56,7 @@ def remove_large_velocity_spikes(frame_array, velocity_array):
         # print(velocity_array)
         if i > 2.0:
             indexes.append(index)
-        if(abs(i - last_velocity) > 0.3):
+        if(abs(i - last_velocity) > 0.01):
             if(not(index in indexes)): indexes.append(index)
         last_velocity = i
     
@@ -108,7 +108,7 @@ if(not(view_raw)):
     
     x_dat, y_dat = remove_large_velocity_spikes(frames_converted_to_s[0:-1], data["Displacement"])
     axis[1].plot(x_dat, y_dat)
-    z = np.polyfit(x_dat, y_dat, 15)
+    z = np.polyfit(x_dat, y_dat, 8)
     p = np.poly1d(z)        
     axis[1].plot(x_dat, p(x_dat))        
     plt.show()
