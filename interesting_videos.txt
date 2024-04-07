@@ -1,4 +1,7 @@
 Best Run -> 0404 r6_70ss1.0
+
+Other good runs -> results_processed/fastestrunyet
+
 Constant Speed -> 2.0_no_decel (shows no deceleration)
 
 Seeing Limitations of Object Tracking: 
