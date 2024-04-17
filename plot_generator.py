@@ -11,7 +11,7 @@ def on_move(event):
 
 def save():
     data.pop('Displacement')
-    print(data)
+    # print(data)
     with open(f"file_edited.csv", mode='w', newline='') as file_2:
         fieldnames = ['Frame', 'X Pos', 'Y Pos']
         writer = csv.DictWriter(file_2, fieldnames=fieldnames)
@@ -92,14 +92,15 @@ with open(f'results/{file_name}.csv') as file:
             data["X_mid"].append(float(row[1]))
             data["Y_mid"].append(float(row[2]))
     
-print(data["X_mid"])
-print(data["Y_mid"])
+# print(data["X_mid"])
+# print(data["Y_mid"])
 
 if(not(view_raw)):
     figure, axis = plt.subplots(2)
 
     axis[0].plot(np.array(data["X_mid"]), np.array(data["Y_mid"]), marker='x')
     frames_converted_to_s = [i*FPS for i in data["Frame"]]
+    print(frames_converted_to_s)
     if(not(view_raw)):
         for index,i in enumerate(frames_converted_to_s):
             if(index == 0):

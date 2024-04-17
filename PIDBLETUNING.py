@@ -220,22 +220,22 @@ class Root(ctk.CTk):
         await self.ble_manager.send_command(33, 0.1)
         # await self.ble_manager.send_command(95)
 
-    async def send_stop_conds_async(self, val_1):
+    async def send_single_float_w_msg_async(self, val_1, command_number: int):
         # await self.ble_manager.send_command(95)
         await self.ble_manager.send_command(34, 0.1)
         # await asyncio.sleep(0.05)
-        await self.ble_manager.send_command_with_argument(55, 15, 0.3)
+        await self.ble_manager.send_command_with_argument(55, command_number, 0.3)
         await self.ble_manager.send_command_with_argument(50, val_1, 0.3)
         await self.ble_manager.send_command(33, 0.1)
         # await self.ble_manager.send_command(95)
     
-    def send_stop_conds(self):
-        input_1 = self.float_to_bytes_le(float(self.entrySlowSpeeds.get()))
+    def send_single_float_w_msg(self,entry, command_number: int, message: str) -> None: 
+        input_1 = self.float_to_bytes_le(float(entry.get()))
 
-        self.TBcommandLog.insert(tk.END , f"\nSlowing Speeds = {float(self.entrySlowSpeeds.get())}")
+        self.TBcommandLog.insert(tk.END , f"\n{message} = {float(entry.get())}")
         self.TBcommandLog.see(tk.END)
 
-        run_coroutine_threadsafe(self.send_stop_conds_async(input_1))
+        run_coroutine_threadsafe(self.send_single_float_w_msg_async(input_1, command_number))
 
     def send_motor_speeds(self):
         input_1 = self.float_to_bytes_le(float(self.entryMotor1Speed.get()))
@@ -423,21 +423,31 @@ class Root(ctk.CTk):
 
         ## Desired Speed Adjusters End
 
-        ## Slow and Stop Condition Adjusters BEGIN
+        ## Stop Condition Adjusters BEGIN
 
         self.labelSlowConditions = ctk.CTkLabel(self, text="Slow Speed")
         self.labelSlowConditions.place(x=250, y=385)
 
-        # self.entrySlowCond = ctk.CTkEntry(self, width=60)
-        # self.entrySlowCond.place(x=250, y=410)
-
         self.entrySlowSpeeds = ctk.CTkEntry(self, width=60)
         self.entrySlowSpeeds.place(x=250, y=410)
 
-        self.buttonSendSlowStuff = ctk.CTkButton(self, width=50, text="Send", command=self.send_stop_conds)
+        self.buttonSendSlowStuff = ctk.CTkButton(self, width=50, text="Send", command=lambda e=self.entrySlowSpeeds: self.send_single_float_w_msg(e,15, "Slow Speeds"))
         self.buttonSendSlowStuff.place(x=320, y= 410)
     
-        ## Slow and Stop Condition Adjusters END
+        ## Stop Condition Adjusters END
+
+        ## Turning Speed Adjuster BEGIN
+
+        self.labelSlowConditions = ctk.CTkLabel(self, text="Turning Speed")
+        self.labelSlowConditions.place(x=250, y=470)
+
+        self.entrySlowSpeeds = ctk.CTkEntry(self, width=60)
+        self.entrySlowSpeeds.place(x=250, y=495)
+
+        self.buttonSendSlowStuff = ctk.CTkButton(self, width=50, text="Send", command=lambda e=self.entrySlowSpeeds: self.send_single_float_w_msg(e,16, "Turning Speed"))
+        self.buttonSendSlowStuff.place(x=320, y= 495)
+
+        ## Turning Speed Adjuster END
 
         self.buttonCalibrate = ctk.CTkButton(self, text= "Calibrate Sensors", command=lambda : self.send_command_with_text(200, "Calibrating Sensors"))
         self.buttonCalibrate.place(x=250, y=445)
@@ -510,14 +520,10 @@ class Root(ctk.CTk):
         self.bind_all("<Right>", lambda e: self.send_command_with_text(64, "R"))
 
         self.bind_all("<z>", lambda e: self.send_speed_quick(0))
-        self.bind_all("<x>", lambda e: self.send_speed_quick(10))
-        self.bind_all("<c>", lambda e: self.send_speed_quick(20))
-        self.bind_all("<v>", lambda e: self.send_speed_quick(30))
-        self.bind_all("<b>", lambda e: self.send_speed_quick(40))
-        self.bind_all("<n>", lambda e: self.send_speed_quick(50))
-        self.bind_all("<m>", lambda e: self.send_speed_quick(60))
-        self.bind_all("<k>", lambda e: self.send_speed_quick(70))
-        self.bind_all("<l>", lambda e: self.send_speed_quick(80))
+        self.bind_all("<x>", lambda e: self.send_speed_quick(40))
+        self.bind_all("<c>", lambda e: self.send_speed_quick(80))
+        self.bind_all("<v>", lambda e: self.send_speed_quick(120))
+        self.bind_all("<b>", lambda e: self.send_speed_quick(250))
         
 
         self.bind_all("<s>", self.toggle_serial)
