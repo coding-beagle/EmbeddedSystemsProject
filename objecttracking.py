@@ -64,6 +64,8 @@ while(1):
     thresh = cv2.dilate(thresh, None, iterations=7)
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
+
+    cv2.imshow("Difference", thresh)
 	# loop over the contours
     frame_with_contours = frame.copy()
     for c in cnts:

@@ -325,9 +325,9 @@ class Root(ctk.CTk):
 
         ## Geometry and Theme Settings
         ctk.set_appearance_mode("dark")   
-        ctk.set_default_color_theme("dark-blue")
+        ctk.set_default_color_theme("green")
     
-        self.geometry("500x530")
+        self.geometry("500x540")
         self.title("WQY BLE")
 
         self.resizable(False, False)
@@ -523,10 +523,10 @@ class Root(ctk.CTk):
         self.bind_all("<x>", lambda e: self.send_speed_quick(40))
         self.bind_all("<c>", lambda e: self.send_speed_quick(80))
         self.bind_all("<v>", lambda e: self.send_speed_quick(120))
-        self.bind_all("<b>", lambda e: self.send_speed_quick(250))
+        self.bind_all("<b>", lambda e: self.send_speed_quick(200))
         
 
-        self.bind_all("<s>", self.toggle_serial)
+        self.bind_all("<s>", lambda e: self.send_command_with_text(88, "Toggling Stop Condition"))
 
         self.bind_all("<Escape>", lambda e: self.focus())
 
