@@ -524,8 +524,11 @@ class Root(ctk.CTk):
         self.bind_all("<c>", lambda e: self.send_speed_quick(80))
         self.bind_all("<v>", lambda e: self.send_speed_quick(100))
         self.bind_all("<b>", lambda e: self.send_speed_quick(120))
+        self.bind_all("<n>", lambda e: self.send_speed_quick(140))
+        self.bind_all("<m>", lambda e: self.send_speed_quick(160))
+        self.bind_all("<k>", lambda e: self.send_speed_quick(180))
+        self.bind_all("<l>", lambda e: self.send_speed_quick(200))
         
-
         self.bind_all("<s>", lambda e: self.send_command_with_text(88, "Toggling Stop Condition"))
 
         self.bind_all("<Escape>", lambda e: self.focus())
